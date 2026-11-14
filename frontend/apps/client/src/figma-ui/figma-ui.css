@@ -1,0 +1,908 @@
+.figma-ui-root,
+.fui-page,
+.fui-auth,
+.fui-success {
+  --red: #e51422;
+  --blue: #1457b8;
+  --yellow: #ffc900;
+  --ink: #121212;
+  --cream: #fff9ed;
+  font-family: 'Stack Sans', sans-serif;
+  color: var(--ink);
+}
+
+/* Ensure all images inside FigmaUI are always at least fully displayed vertically */
+.figma-ui-root img,
+.fui-page img,
+.fui-auth img {
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.fui-page {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.fui-header {
+  height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(22px, 4vw, 64px);
+  position: relative;
+  z-index: 3;
+  background: var(--red) url('/banner-figma-red-navs.png') center/cover no-repeat;
+  color: #fff;
+}
+
+.fui-header .fui-brand-mark {
+  background: #fff;
+  color: var(--red);
+}
+
+.fui-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  font-family: 'Tropika';
+  font-size: 34px;
+  line-height: 1;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+
+.fui-header nav {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.fui-header nav button,
+.fui-text-link,
+.fui-auth-footer button {
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+
+.fui-header nav button {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.fui-header nav button:hover {
+  color: var(--yellow);
+}
+
+.fui-text-link:hover {
+  color: var(--red);
+}
+
+.fui-icon-button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.fui-menu {
+  display: none;
+}
+
+.fui-hero {
+  min-height: 640px;
+  height: clamp(620px, 75vh, 880px);
+  background-position: center;
+  background-size: cover;
+  position: relative;
+  overflow: hidden;
+  background-color: #ee1b2b;
+  display: flex;
+  align-items: center;
+}
+
+.fui-hero:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(229, 20, 34, 0.95) 0%, rgba(229, 20, 34, 0.55) 44%, transparent 74%);
+}
+
+.fui-hero-copy {
+  position: relative;
+  z-index: 1;
+  padding: 100px clamp(22px, 7vw, 100px);
+  color: #fff;
+}
+
+.fui-script {
+  font-family: 'Tropika Script', 'Tropika', cursive;
+  margin: 0;
+  font-size: 68px;
+  line-height: 0.75;
+}
+
+.fui-hero h1 {
+  font-family: 'Tropika';
+  font-size: 106px;
+  line-height: 0.88;
+  margin: 0 0 20px;
+}
+
+.fui-pill {
+  display: inline-block;
+  border: 2px solid #fff;
+  border-radius: 18px;
+  padding: 7px 13px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.fui-home main {
+  max-width: 1440px;
+  margin: auto;
+}
+
+.fui-ribbon {
+  background: var(--red);
+  color: #fff;
+  border-radius: 8px;
+  margin: 14px 28px 10px;
+  padding: 9px 13px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.fui-destinations-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  padding: 0 60px 22px;
+}
+
+.fui-mini-place {
+  height: 70px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  text-align: left;
+  padding: 8px 15px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  background: linear-gradient(145deg, #c98224, #f5c329);
+  transition: transform 0.2s;
+}
+
+.fui-mini-place:hover {
+  transform: translateY(-2px);
+}
+
+.fui-mini-place span {
+  font-family: 'Tropika';
+  font-size: 20px;
+}
+
+.fui-mini-place small {
+  font-size: 10px;
+}
+
+.place-1 {
+  background: linear-gradient(145deg, #1478a3, #0c4d8e);
+}
+
+.place-2 {
+  background: linear-gradient(145deg, #247d43, #0b4d29);
+}
+
+.place-3 {
+  background: linear-gradient(145deg, #9f2d58, #40205b);
+}
+
+.fui-discover {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 42px;
+  align-items: center;
+  padding: 10px 60px 48px;
+}
+
+/* Map image: fully displayed vertically with natural aspect ratio and contain sizing */
+.fui-discover img {
+  width: 100%;
+  height: auto;
+  max-height: 480px;
+  aspect-ratio: 1502 / 791;
+  object-fit: contain;
+  object-position: center;
+  border: 5px solid #b8d1e8;
+  border-radius: 8px;
+  display: block;
+}
+
+.fui-discover h2 {
+  font-family: 'Tropika';
+  color: #2365b7;
+  font-size: 66px;
+  line-height: 0.75;
+  margin: 0;
+}
+
+.fui-discover p {
+  font-size: 19px;
+  border: 3px solid #1e65b9;
+  border-radius: 7px;
+  padding: 10px;
+  text-align: center;
+  color: #1e65b9;
+}
+
+.fui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 25px;
+  background: var(--red);
+  color: #fff;
+  min-height: 48px;
+  padding: 10px 24px;
+  font: 700 18px 'Stack Sans';
+  cursor: pointer;
+  transition: transform 0.2s, filter 0.2s;
+  text-decoration: none;
+}
+
+.fui-button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.fui-button--outline {
+  background: #fff;
+  color: var(--red);
+  border: 2px solid var(--red);
+}
+
+.fui-blue-band,
+.fui-membership-banner {
+  min-height: 105px;
+  padding: 16px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  background: #1258b4 url('https://www.figma.com/api/mcp/asset/3fd2aa93-db1c-4593-badd-814ebd592171.png') center/cover;
+}
+
+.fui-blue-band .fui-script,
+.fui-membership-banner .fui-script {
+  font-size: 48px;
+}
+
+.fui-blue-band span,
+.fui-membership-banner span {
+  display: block;
+  font-weight: 600;
+}
+
+.fui-section {
+  padding: 34px 60px 60px;
+  text-align: center;
+}
+
+.fui-section-title {
+  display: inline-block;
+  border: 2px solid var(--blue);
+  border-radius: 7px;
+  color: var(--blue);
+  font-weight: 700;
+  padding: 9px 18px;
+  margin-bottom: 26px;
+}
+
+.fui-destination-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px 22px;
+  text-align: center;
+}
+
+/* Destination images: aspect ratio 1.12 with contain ensures full vertical display without cropping */
+.fui-destination img {
+  width: 100%;
+  aspect-ratio: 1.12;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 9px;
+  background-color: #f8f9fa;
+  display: block;
+}
+
+.fui-destination h3 {
+  font-family: 'Tropika';
+  color: #f1a800;
+  font-size: 28px;
+  margin: 5px 0 0;
+}
+
+.fui-destination p {
+  font-size: 11px;
+  min-height: 28px;
+  margin: 2px auto 8px;
+  max-width: 220px;
+}
+
+.fui-destination button {
+  border: 1px solid #111;
+  border-radius: 14px;
+  background: #fff;
+  padding: 4px 11px;
+  font: 12px 'Stack Sans';
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.fui-destination button:hover {
+  background: #111;
+  color: #fff;
+}
+
+.fui-membership-banner {
+  margin-top: 0;
+  background-color: var(--red);
+  background-image: url('https://www.figma.com/api/mcp/asset/994d8d14-afbf-4ef3-8bb8-6ec556255ef9.png');
+}
+
+.fui-plans-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  padding: 28px 60px 50px;
+}
+
+.fui-plans-preview article {
+  text-align: center;
+}
+
+.fui-plan-art {
+  aspect-ratio: 1.3;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #f5a400, #e3491d);
+}
+
+.plan-1 {
+  background: linear-gradient(135deg, #ec4e3f, #ef9b16);
+}
+
+.plan-2 {
+  background: linear-gradient(135deg, #84a7dd, #f1bd2c);
+}
+
+.fui-plan-art svg {
+  width: 60px;
+  height: 60px;
+}
+
+.fui-plans-preview h3,
+.fui-plan-row h2 {
+  font-family: 'Tropika';
+  font-size: 30px;
+  color: #f18e00;
+  margin: 8px 0;
+}
+
+.fui-plans-preview strong {
+  display: block;
+}
+
+.fui-footer {
+  background: var(--red) url('/banner-figma-red-navs.png') center/cover no-repeat;
+  color: #fff;
+  min-height: 150px;
+  padding: 26px 60px;
+  display: flex;
+  gap: 110px;
+  align-items: center;
+}
+
+.fui-footer .fui-script {
+  font-size: 58px;
+}
+
+.fui-footer small {
+  display: block;
+  text-align: center;
+  font-weight: 700;
+}
+
+.fui-footer p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fui-auth,
+.fui-success {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fff9ef 0%, #fff 48%, #ffe8df 100%);
+  display: grid;
+  place-items: center;
+  padding: 40px 20px;
+  position: relative;
+}
+
+.fui-back {
+  position: absolute;
+  top: 26px;
+  left: 30px;
+  border: 0;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font: 600 15px 'Stack Sans';
+  cursor: pointer;
+}
+
+.fui-auth-card {
+  width: min(620px, 100%);
+  text-align: center;
+}
+
+.fui-auth-card > .fui-brand-mark {
+  margin: 0 auto 20px;
+}
+
+.fui-auth h1 {
+  font-family: 'Tropika';
+  font-weight: 400;
+  font-size: 65px;
+  line-height: 0.78;
+  margin: 0 0 28px;
+}
+
+.fui-auth h1 strong {
+  font-family: 'Tropika Script';
+  font-size: 1.08em;
+  font-weight: 400;
+}
+
+.fui-auth-card > p {
+  font-size: 19px;
+  max-width: 530px;
+  margin: 0 auto 30px;
+}
+
+.fui-auth form {
+  display: grid;
+  gap: 20px;
+}
+
+.fui-field {
+  display: grid;
+  gap: 7px;
+  text-align: left;
+}
+
+.fui-field span {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.fui-field input,
+.fui-field select {
+  width: 100%;
+  height: 54px;
+  border: 2px solid #e5bdaa;
+  border-radius: 11px;
+  background: #fff;
+  padding: 0 16px;
+  font: 17px 'Stack Sans';
+  color: #222;
+}
+
+.fui-auth form .fui-button {
+  margin: 15px auto 0;
+  min-width: 190px;
+}
+
+.fui-text-link {
+  margin: 28px 0 8px;
+  font-size: 15px;
+}
+
+.fui-auth-footer {
+  margin: 0;
+  font-size: 15px !important;
+}
+
+.fui-auth-footer button {
+  font-weight: 700;
+  color: var(--red);
+}
+
+.fui-choice-grid,
+.fui-experience-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
+}
+
+.fui-choice-grid button,
+.fui-experience-grid button {
+  min-height: 200px;
+  background: #fff;
+  border: 3px solid var(--red);
+  border-radius: 18px;
+  color: var(--red);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  padding: 20px;
+}
+
+.fui-choice-grid span,
+.fui-experience-grid span {
+  font-family: 'Tropika';
+  font-size: 42px;
+}
+
+.fui-choice-grid small,
+.fui-experience-grid small {
+  font: 16px 'Stack Sans';
+  color: #555;
+}
+
+.fui-experience-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.fui-experience-grid button {
+  border-color: var(--blue);
+  color: var(--blue);
+  min-height: 150px;
+  position: relative;
+}
+
+.fui-check {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 31px;
+  height: 31px;
+  border: 2px solid var(--blue);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.fui-auth details {
+  border: 2px solid #e5bdaa;
+  border-radius: 11px;
+  padding: 12px 16px;
+  text-align: left;
+  background: #fff;
+}
+
+.fui-auth summary {
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.fui-success {
+  background: var(--red);
+  color: #fff;
+  text-align: center;
+}
+
+.fui-success .fui-brand-mark {
+  background: #fff;
+  color: var(--red);
+  margin: auto;
+}
+
+.fui-success h1 {
+  font-family: 'Tropika';
+  font-size: 68px;
+  line-height: 0.9;
+}
+
+.fui-success .fui-script {
+  font-size: 80px;
+  margin-top: 28px;
+}
+
+.fui-success .fui-button {
+  background: #fff;
+  color: var(--red);
+  margin-top: 28px;
+}
+
+.fui-memberships-page {
+  min-height: 100vh;
+  background: #fff;
+  color: #111;
+  font-family: 'Stack Sans', sans-serif;
+}
+
+.fui-memberships-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 100%;
+  height: 86px;
+  padding: 27px 41px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.fui-memberships-header > button:first-child {
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.fui-memberships-header img {
+  display: block;
+  width: 72px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.fui-memberships-back {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  color: #fff;
+  background: #0005;
+  border-radius: 18px;
+  padding: 8px 12px;
+  font: 600 14px 'Stack Sans';
+  cursor: pointer;
+}
+
+.fui-memberships-banner {
+  width: 100%;
+  height: auto;
+  line-height: 0;
+  background: #f4b80a;
+}
+
+.fui-memberships-banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.fui-membership-plans {
+  width: min(1160px, calc(100% - 154px));
+  margin: 0 auto;
+}
+
+.fui-membership-plan {
+  display: grid;
+  grid-template-columns: 397px minmax(0, 1fr);
+  gap: 45px;
+  align-items: center;
+  min-height: 484px;
+  padding: 58px 0;
+}
+
+.fui-membership-plan-image {
+  display: block;
+  width: 397px;
+  height: 397px;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+.fui-membership-plan-copy {
+  color: var(--plan-color);
+}
+
+.fui-membership-plan-copy h2 {
+  margin: 0 0 30px;
+  font-family: 'Tropika';
+  font-size: clamp(40px, 5.1vw, 74px);
+  line-height: 1;
+  font-weight: 400;
+}
+
+.fui-membership-plan-copy ul {
+  max-width: 805px;
+  margin: 0 0 29px;
+  padding-left: 27px;
+  font-size: clamp(17px, 2vw, 29px);
+  line-height: 1.18;
+}
+
+.fui-membership-plan-copy li {
+  padding-left: 3px;
+}
+
+.fui-membership-buy {
+  min-height: 38px;
+  padding: 5px 12px;
+  border: 3px solid var(--plan-color);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--plan-color);
+  font-size: 18px;
+  box-shadow: none;
+}
+
+.fui-membership-buy:hover {
+  background: var(--plan-color);
+  color: #fff;
+}
+
+@media (max-width: 700px) {
+  .fui-header {
+    height: 66px;
+    background: var(--red) url('/banner-figma-red-navs.png') center/cover no-repeat;
+  }
+  .fui-header nav {
+    display: none;
+    position: absolute;
+    top: 66px;
+    left: 0;
+    right: 0;
+    background: var(--red) url('/banner-figma-red-navs.png') center/cover no-repeat;
+    padding: 15px 22px;
+    box-shadow: 0 8px 18px #0004;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .fui-header nav.is-open {
+    display: flex;
+  }
+  .fui-menu {
+    display: block;
+  }
+  .fui-hero {
+    min-height: 480px;
+    height: clamp(480px, 70vh, 560px);
+  }
+  .fui-hero-copy {
+    padding: 95px 24px;
+  }
+  .fui-hero h1 {
+    font-size: 76px;
+  }
+  .fui-script {
+    font-size: 48px;
+  }
+  .fui-destinations-strip,
+  .fui-destination-grid,
+  .fui-plans-preview {
+    grid-template-columns: repeat(2, 1fr);
+    padding-left: 22px;
+    padding-right: 22px;
+    gap: 12px;
+  }
+  .fui-discover {
+    grid-template-columns: 1fr;
+    padding: 16px 22px 30px;
+    gap: 18px;
+  }
+  .fui-discover h2 {
+    font-size: 52px;
+  }
+  .fui-blue-band,
+  .fui-membership-banner {
+    padding: 15px 22px;
+    gap: 15px;
+  }
+  .fui-blue-band .fui-script,
+  .fui-membership-banner .fui-script {
+    font-size: 36px;
+  }
+  .fui-blue-band .fui-button,
+  .fui-membership-banner .fui-button {
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+  .fui-section {
+    padding: 28px 22px 38px;
+  }
+  .fui-footer {
+    padding: 25px 22px;
+    gap: 25px;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .fui-footer .fui-script {
+    font-size: 44px;
+  }
+  .fui-auth h1 {
+    font-size: 52px;
+  }
+  .fui-choice-grid,
+  .fui-experience-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .fui-choice-grid button {
+    min-height: 130px;
+  }
+  .fui-experience-grid button {
+    min-height: 115px;
+  }
+  .fui-success h1 {
+    font-size: 45px;
+  }
+  .fui-memberships-header {
+    height: 70px;
+    padding: 17px 20px;
+  }
+  .fui-memberships-header img {
+    width: 54px;
+    height: 42px;
+  }
+  .fui-memberships-back {
+    display: inline-flex;
+  }
+  .fui-memberships-banner img {
+    min-height: 190px;
+    object-fit: cover;
+  }
+  .fui-membership-plans {
+    width: calc(100% - 44px);
+  }
+  .fui-membership-plan {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    min-height: 0;
+    padding: 34px 0 42px;
+  }
+  .fui-membership-plan-image {
+    width: min(100%, 397px);
+    height: auto;
+    aspect-ratio: 1;
+    justify-self: center;
+  }
+  .fui-membership-plan-copy h2 {
+    margin-bottom: 16px;
+    font-size: clamp(38px, 12vw, 58px);
+  }
+  .fui-membership-plan-copy ul {
+    margin-bottom: 20px;
+    padding-left: 21px;
+    font-size: 17px;
+  }
+  .fui-ribbon {
+    margin-left: 22px;
+    margin-right: 22px;
+    font-size: 11px;
+  }
+}
