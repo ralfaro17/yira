@@ -1,0 +1,9 @@
+/env
+/venv
+.pnpm-store
+node_modules
+.env
+.env.local
+.env.prod
+/uv
+/.mypy_cache
