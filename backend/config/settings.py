@@ -10,10 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-from pathlib import Path
-from dotenv import load_dotenv
-from enum import Enum
 import os
+from enum import Enum
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -59,7 +60,7 @@ allowed_hosts_env = os.getenv("ALLOWED_HOSTS")
 if allowed_hosts_env:
     ALLOWED_HOSTS: list[str] = [h.strip() for h in allowed_hosts_env.split(",") if h.strip()]
 else:
-    ALLOWED_HOSTS: list[str] = ["yira.onrender.com", "localhost", "127.0.0.1"]
+    ALLOWED_HOSTS = ["yira.onrender.com", "localhost", "127.0.0.1"]
 
 if IS_DEVELOPMENT:
     ALLOWED_HOSTS = ["*"]
@@ -80,22 +81,16 @@ if _frontend_url:
 CSRF_TRUSTED_ORIGINS: list[str] = _trusted_origins
 
 # Application definition
-AUTH_USER_MODEL = 'api.User'
+# Uses the stock django.contrib.auth User model (no AUTH_USER_MODEL override).
 
 THIRD_PARTY_APPS = [
     'whitenoise.runserver_nostatic',
+    'corsheaders',
     'rest_framework',
 
     'allauth',
     'allauth.account',
     'allauth.headless',
-
-    'allauth.socialaccount',
-    'allauth.mfa',
-    'allauth.usersessions',
-
-    # 'allauth.socialaccount',
-    # 'allauth.socialaccount.providers.google',
 ]
 
 DJANGO_APPS = [
@@ -108,10 +103,7 @@ DJANGO_APPS = [
 ]
 
 LOCAL_APPS = [
-    'api',
-    'billing',
-    'itineraries',
-    'gamification',
+    'health',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -124,7 +116,20 @@ HEADLESS_FRONTEND_URLS = {
     "account_login": f"{FRONTEND_URL}/account/login",
 }
 
+# --- django-allauth (headless, session-based, username/email + password) ---
+HEADLESS_ONLY = True
+HEADLESS_CLIENTS = ("browser",)  # session cookies only, no app tokens
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+ACCOUNT_SIGNUP_FIELDS = ["username*", "email*", "password1*"]
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_UNIQUE_EMAIL = True
+
+# --- CORS (frontend dev server sends cookies cross-origin) ---
+CORS_ALLOWED_ORIGINS: list[str] = list(_trusted_origins)
+CORS_ALLOW_CREDENTIALS = True
+
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -135,20 +140,6 @@ MIDDLEWARE = [
 
     "allauth.account.middleware.AccountMiddleware",
 ]
-
-# Provider specific settings
-""" SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        # For each OAuth based provider, either add a ``SocialApp``
-        # (``socialaccount`` app) containing the required client
-        # credentials, or list them here:
-        'APP': {
-            'client_id': '123',
-            'secret': '456',
-            'key': ''
-        }
-    }
-} """
 
 ROOT_URLCONF = "config.urls"
 
@@ -237,9 +228,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").is_dir() else []
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -271,10 +260,12 @@ else:
 
 # REST FRAMEWORK CONFIG
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
     ),
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 500,
 }
 
 DOMAIN = 'localhost:5173'

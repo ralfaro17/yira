@@ -39,8 +39,10 @@ dependencies = [
     "jiter==0.12.0",
     "jmespath==1.0.1",
     "msgpack==1.1.2",
+    "numpy>=2.5.4",
     "oauthlib==3.3.1",
     "packaging==25.0",
+    "pandas>=3.1.1",
     "psycopg2==2.9.11",
     "py-ubjson==0.16.1",
     "pyasn1==0.6.1",
@@ -82,6 +84,7 @@ dev = [
     "django-stubs>=6.0.5",
     "djangorestframework-stubs>=3.17.0",
     "mypy>=2.1.0",
+    "pandas-stubs>=3.1.0.261029",
     "ruff>=0.15.15",
     "types-requests>=2.33.0.20260518",
 ]
