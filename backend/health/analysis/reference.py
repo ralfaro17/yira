@@ -154,6 +154,19 @@ METRICS: dict[str, MetricSpec] = {
             baseline_tracked=False,
             notes="Elevated CO2 on the ISS has been associated with headaches and reduced cognition.",
         ),
+        MetricSpec(
+            "exercise_minutes",
+            "Resistive exercise",
+            "min",
+            normal_low=120,
+            normal_high=240,
+            warn_low=60,
+            crit_low=20,
+            baseline_tracked=False,
+            aggregate="sum",
+            notes="Daily countermeasure exercise (ISS crews schedule about 2.5 h/day) "
+            "against bone and muscle loss in microgravity.",
+        ),
     ]
 }
 

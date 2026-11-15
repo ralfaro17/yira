@@ -26,8 +26,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--email", default="demo@example.com", help="Email if the user is created."
         )
-        parser.add_argument("--mission", default="Artemis Sim")
-        parser.add_argument("--crew", type=int, default=4)
+        parser.add_argument("--mission", default="Misión a Marte")
+        parser.add_argument("--crew", type=int, default=3)
         parser.add_argument("--days", type=int, default=14)
         parser.add_argument(
             "--interval", default="5m", help="Sampling interval for high-rate vitals."
@@ -94,6 +94,8 @@ class Command(BaseCommand):
                 mission=opts["mission"],
                 role=profile.role,
                 sex=profile.sex,
+                photo=profile.photo,
+                date_of_birth=profile.date_of_birth(),
             )
             frame = generate_crew_frame(
                 profile, i, start, opts["days"], interval, opts["seed"], scenarios
@@ -106,9 +108,14 @@ class Command(BaseCommand):
                     crew, batch.to_dict("records"), Measurement.Source.SIMULATED
                 )
                 n_alerts += len(result["alerts"])
+            status = services.crew_systems(crew)
+            scores = ", ".join(
+                f"{sys['key']}={sys['score']}" for sys in status["systems"]
+            )
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"{crew.name}: {len(frame)} measurements, {n_alerts} alerts"
+                    f"{crew.name}: {len(frame)} measurements, {n_alerts} alerts, "
+                    f"status={status['status']} ({scores})"
                 )
             )
 

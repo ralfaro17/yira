@@ -18,7 +18,16 @@ from django.db.models import Count, Max, Min
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import is_naive, make_aware
 
-from .analysis import anomaly, derived, frames, reference, risk, thresholds, trends
+from .analysis import (
+    anomaly,
+    derived,
+    frames,
+    reference,
+    risk,
+    systems,
+    thresholds,
+    trends,
+)
 from .analysis import baseline as baseline_mod
 from .models import Alert, CrewMember, Measurement, Metric
 
@@ -135,6 +144,54 @@ def crew_risk(crew_member: CrewMember) -> dict:
     result["as_of"] = newest.isoformat() if newest else None
     result["disclaimer"] = reference.DISCLAIMER
     return result
+
+
+SYSTEMS_HISTORY_PAD = timedelta(
+    days=7
+)  # extra data so day-1 of the history has a 7-day window
+
+
+def crew_systems(
+    crew_member: CrewMember, days: int = 7, risk_result: dict | None = None
+) -> dict:
+    """System scores now, a ``days``-long daily history and the overall crew status."""
+    newest = latest_measurement_time(crew_member)
+    if newest is None:
+        return {
+            "as_of": None,
+            "status": "unknown",
+            "risk_level": None,
+            "systems": [],
+            "stress_level": None,
+            "current_issue": None,
+            "daily": [],
+        }
+    as_of = pd.Timestamp(newest)
+    df = load_frame(
+        crew_member,
+        start=newest - timedelta(days=days) - SYSTEMS_HISTORY_PAD,
+        end=newest,
+    )
+    tracked = {
+        c.metric
+        for cfg in systems.SYSTEMS.values()
+        for c in cfg["components"]
+        if c.direction and reference.get(c.metric).baseline_tracked
+    }
+    baselines = {m: personal_baseline(crew_member, m) for m in sorted(tracked)}
+    radiation = frames.series(
+        load_frame(crew_member, [Metric.RADIATION_DOSE]), Metric.RADIATION_DOSE
+    )
+    now = systems.score_systems(df, as_of, baselines, radiation)
+    risk_result = risk_result or crew_risk(crew_member)
+    return {
+        **now,
+        "status": systems.overall_status(now["systems"], risk_result["level"]),
+        "risk_level": risk_result["level"],
+        "current_issue": systems.current_issue(now["systems"]),
+        "daily": systems.daily_scores(df, as_of, days, baselines, radiation),
+        "disclaimer": reference.DISCLAIMER,
+    }
 
 
 # --------------------------------------------------------------------------- ingestion

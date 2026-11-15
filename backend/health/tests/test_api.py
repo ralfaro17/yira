@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from health.models import Alert, CrewMember, Measurement
+from health.models import Alert, CrewMember, Measurement, OperatorProfile
 
 AUTH = "/_allauth/browser/v1/auth"
 
@@ -250,3 +250,96 @@ class HealthApiTests(TestCase):
         self.assertEqual(
             self.client.delete(f"/api/health/alerts/{alert.id}/").status_code, 405
         )
+
+
+class DesignSupportApiTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("ops", "ops@example.com", "pw-12345678")
+        self.client = APIClient()
+        self.client.force_login(self.user)
+        self.crew = CrewMember.objects.create(
+            owner=self.user, name="Rosa", photo="/crew/rosa.png"
+        )
+        t0 = timezone.now().replace(microsecond=0) - timedelta(hours=3)
+        rows = [
+            {
+                "metric": m,
+                "value": v,
+                "recorded_at": (t0 + timedelta(minutes=5 * i)).isoformat(),
+            }
+            for i in range(30)
+            for m, v in (("heart_rate", 64), ("spo2", 98), ("body_temp", 39.8))
+        ]
+        self.client.post(
+            f"/api/health/crew/{self.crew.id}/measurements/",
+            {"measurements": rows},
+            format="json",
+        )
+
+    def test_systems_endpoint(self):
+        r = self.client.get(f"/api/health/crew/{self.crew.id}/systems/", {"days": 3})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(
+            {s["key"] for s in r.data["systems"]},
+            {"cardiovascular", "immune", "musculoskeletal", "mental"},
+        )
+        self.assertEqual(r.data["current_issue"]["system"], "immune")
+        self.assertEqual(len(r.data["daily"]), 3)
+        self.assertIn(r.data["status"], {"observation", "critical"})
+
+    def test_dashboard_fields_and_totals(self):
+        r = self.client.get("/api/health/dashboard/")
+        crew = r.data["crew"][0]
+        for key in (
+            "status",
+            "systems",
+            "photo",
+            "age",
+            "last_scan_at",
+            "daily",
+            "current_issue",
+        ):
+            self.assertIn(key, crew)
+        self.assertEqual(r.data["totals"]["crew"], 1)
+        self.assertEqual(r.data["totals"]["avg_heart_rate"], 64)
+        self.assertGreater(r.data["totals"]["unread_alerts"], 0)
+
+    def test_acknowledge_all(self):
+        self.assertTrue(Alert.objects.filter(acknowledged=False).exists())
+        r = self.client.post("/api/health/alerts/acknowledge-all/")
+        self.assertEqual(r.status_code, 200)
+        self.assertGreater(r.data["acknowledged"], 0)
+        self.assertFalse(Alert.objects.filter(acknowledged=False).exists())
+        self.assertEqual(self.client.post("/api/health/alerts/", {}).status_code, 405)
+
+    def test_me(self):
+        r = self.client.get("/api/health/me/")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["username"], "ops")
+        self.assertEqual(r.data["role_label"], "Centro de control · Tierra")
+        r = self.client.patch(
+            "/api/health/me/",
+            {"display_name": "Daliski", "emergency_alerts": False},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 200)
+        profile = OperatorProfile.objects.get(user=self.user)
+        self.assertEqual(profile.display_name, "Daliski")
+        self.assertFalse(profile.emergency_alerts)
+        self.assertEqual(
+            self.client.patch(
+                "/api/health/me/", {"timezone": "Mars/Olympus"}, format="json"
+            ).status_code,
+            400,
+        )
+        self.assertEqual(
+            self.client.patch("/api/health/me/", {"username": "x"}, format="json").data[
+                "username"
+            ],
+            "ops",
+        )
+
+    def test_session_remember(self):
+        r = self.client.post("/api/health/me/session/", {"remember": False}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(self.client.session.get_expire_at_browser_close())

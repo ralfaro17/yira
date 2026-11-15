@@ -1,3 +1,5 @@
+from datetime import date, time
+
 from django.conf import settings
 from django.db import models
 
@@ -13,6 +15,7 @@ class Metric(models.TextChoices):
     SLEEP_DURATION = "sleep_duration", "Sleep duration"
     RADIATION_DOSE = "radiation_dose", "Radiation dose"
     CABIN_CO2 = "cabin_co2", "Cabin CO2 partial pressure"
+    EXERCISE_MINUTES = "exercise_minutes", "Resistive exercise"
 
 
 class Severity(models.TextChoices):
@@ -37,10 +40,21 @@ class CrewMember(models.Model):
     sex = models.CharField(max_length=1, choices=Sex.choices, default=Sex.OTHER)
     height_cm = models.FloatField(null=True, blank=True)
     mass_kg = models.FloatField(null=True, blank=True)
+    photo = models.CharField(
+        max_length=255, blank=True, help_text="Public path or URL of the portrait."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["name"]
+
+    @property
+    def age(self) -> int | None:
+        if self.date_of_birth is None:
+            return None
+        today = date.today()
+        dob = self.date_of_birth
+        return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
     def __str__(self) -> str:
         return f"{self.name} ({self.mission})" if self.mission else self.name
@@ -114,3 +128,28 @@ class Alert(models.Model):
 
     def __str__(self) -> str:
         return f"[{self.severity}] {self.metric}: {self.message}"
+
+
+class OperatorProfile(models.Model):
+    """Display info and preferences for a ground-control operator (one per user)."""
+
+    class Units(models.TextChoices):
+        METRIC = "metric", "Métrico"
+        IMPERIAL = "imperial", "Imperial"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="operator_profile",
+    )
+    display_name = models.CharField(max_length=120, blank=True)
+    role_label = models.CharField(max_length=120, default="Centro de control · Tierra")
+    photo = models.CharField(max_length=255, blank=True)
+    language = models.CharField(max_length=8, default="es")
+    timezone = models.CharField(max_length=64, default="America/Managua")
+    emergency_alerts = models.BooleanField(default=True)
+    daily_summary_time = models.TimeField(default=time(8, 0))
+    units = models.CharField(max_length=16, choices=Units.choices, default=Units.METRIC)
+
+    def __str__(self) -> str:
+        return self.display_name or self.user.get_username()

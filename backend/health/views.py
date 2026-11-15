@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from typing import cast
 
 import pandas as pd
 from django.http import HttpRequest, JsonResponse
+from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import mixins, status, viewsets
@@ -18,13 +20,14 @@ from rest_framework.views import APIView
 from . import services
 from .analysis import anomaly, derived, frames, reference, summary, trends
 from .analysis.thresholds import evaluate
-from .models import Alert, CrewMember, Measurement, Metric
+from .models import Alert, CrewMember, Measurement, Metric, OperatorProfile
 from .serializers import (
     AlertSerializer,
     CrewMemberSerializer,
     CsvUploadSerializer,
     MeasurementBulkSerializer,
     MeasurementSerializer,
+    MeSerializer,
 )
 
 MAX_CSV_BYTES = 5 * 1024 * 1024
@@ -345,6 +348,15 @@ class CrewMemberViewSet(viewsets.ModelViewSet):
         )
 
     @action(detail=True, methods=["get"])
+    def systems(self, request: Request, pk=None) -> Response:
+        crew = self.get_object()
+        try:
+            days = min(max(int(request.query_params.get("days", 7)), 1), 30)
+        except ValueError as exc:
+            raise ValidationError({"days": "Must be an integer."}) from exc
+        return Response({"crew_member": crew.id, **services.crew_systems(crew, days)})
+
+    @action(detail=True, methods=["get"])
     def risk(self, request: Request, pk=None) -> Response:
         crew = self.get_object()
         return Response({"crew_member": crew.id, **services.crew_risk(crew)})
@@ -357,7 +369,7 @@ class AlertViewSet(
     viewsets.GenericViewSet,
 ):
     serializer_class = AlertSerializer
-    http_method_names = ["get", "patch", "head", "options"]
+    http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_queryset(self):
         qs = Alert.objects.filter(crew_member__owner=self.request.user).select_related(
@@ -373,12 +385,28 @@ class AlertViewSet(
             qs = qs.filter(acknowledged=ack.lower() in {"1", "true", "yes"})
         return qs
 
+    @action(detail=False, methods=["post"], url_path="acknowledge-all")
+    def acknowledge_all(self, request: Request) -> Response:
+        """Acknowledge every open alert (optionally filtered like the list endpoint)."""
+        updated = (
+            self.get_queryset()
+            .filter(acknowledged=False)
+            .update(
+                acknowledged=True,
+                acknowledged_by=request.user,
+                acknowledged_at=timezone.now(),
+            )
+        )
+        return Response({"acknowledged": updated})
+
 
 class DashboardView(APIView):
     def get(self, request: Request) -> Response:
         crew_out = []
-        for crew in CrewMember.objects.filter(owner_id=request.user.pk):
+        for crew in CrewMember.objects.filter(owner_id=request.user.pk).order_by("id"):
             latest = services.latest_values(crew)
+            risk = services.crew_risk(crew)
+            sys_result = services.crew_systems(crew, days=7, risk_result=risk)
             crew_out.append(
                 {
                     **CrewMemberSerializer(crew).data,
@@ -391,11 +419,58 @@ class DashboardView(APIView):
                         for m, v in latest.items()
                     },
                     "open_alerts": services.open_alert_counts(crew),
-                    "risk": services.crew_risk(crew),
+                    "risk": risk,
+                    "status": sys_result["status"],
+                    "last_scan_at": sys_result["as_of"],
+                    "systems": [
+                        {k: s[k] for k in ("key", "score", "status", "estimated")}
+                        for s in sys_result["systems"]
+                    ],
+                    "stress_level": sys_result["stress_level"],
+                    "current_issue": sys_result["current_issue"],
+                    "daily": sys_result["daily"],
                 }
             )
-        crew_out.sort(key=lambda c: -c["risk"]["score"])
-        return Response({"crew": crew_out, "disclaimer": reference.DISCLAIMER})
+        heart_rates = [
+            c["latest"]["heart_rate"]["value"]
+            for c in crew_out
+            if "heart_rate" in c["latest"]
+        ]
+        totals = {
+            "crew": len(crew_out),
+            "stable": sum(c["status"] == "stable" for c in crew_out),
+            "observation": sum(c["status"] == "observation" for c in crew_out),
+            "critical": sum(c["status"] == "critical" for c in crew_out),
+            "avg_heart_rate": round(sum(heart_rates) / len(heart_rates))
+            if heart_rates
+            else None,
+            "unread_alerts": Alert.objects.filter(
+                crew_member__owner_id=request.user.pk, acknowledged=False
+            ).count(),
+        }
+        return Response(
+            {"crew": crew_out, "totals": totals, "disclaimer": reference.DISCLAIMER}
+        )
+
+
+class MeView(APIView):
+    # Current operator: account identity plus editable profile and preferences.
+
+    def _profile(self, request: Request) -> OperatorProfile:
+        profile, _ = OperatorProfile.objects.get_or_create(
+            user_id=cast(int, request.user.pk),
+            defaults={"display_name": request.user.get_username()},
+        )
+        return profile
+
+    def get(self, request: Request) -> Response:
+        return Response(MeSerializer(self._profile(request)).data)
+
+    def patch(self, request: Request) -> Response:
+        ser = MeSerializer(self._profile(request), data=request.data, partial=True)
+        ser.is_valid(raise_exception=True)
+        ser.save()
+        return Response(ser.data)
 
 
 def _status(metric: str, value: float) -> str:
@@ -403,3 +478,13 @@ def _status(metric: str, value: float) -> str:
         return "n/a"
     breach = evaluate(metric, value)
     return breach.severity if breach else "normal"
+
+
+class SessionPreferenceView(APIView):
+    """``{"remember": false}`` makes the current session end when the browser closes."""
+
+    def post(self, request: Request) -> Response:
+        data = request.data if isinstance(request.data, dict) else {}
+        remember = bool(data.get("remember", True))
+        request.session.set_expiry(None if remember else 0)
+        return Response({"remember": remember})

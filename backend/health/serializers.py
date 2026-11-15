@@ -1,9 +1,10 @@
 import math
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Alert, CrewMember, Measurement, Metric
+from .models import Alert, CrewMember, Measurement, Metric, OperatorProfile
 
 MAX_BULK = 10_000
 
@@ -20,9 +21,13 @@ class CrewMemberSerializer(serializers.ModelSerializer):
             "sex",
             "height_cm",
             "mass_kg",
+            "photo",
+            "age",
             "created_at",
         ]
-        read_only_fields = ["id", "created_at"]
+        read_only_fields = ["id", "age", "created_at"]
+
+    age = serializers.IntegerField(read_only=True)
 
 
 class MeasurementSerializer(serializers.ModelSerializer):
@@ -99,3 +104,30 @@ class AlertSerializer(serializers.ModelSerializer):
             update_fields=["acknowledged", "acknowledged_by", "acknowledged_at"]
         )
         return instance
+
+
+class MeSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+
+    class Meta:
+        model = OperatorProfile
+        fields = [
+            "username",
+            "email",
+            "display_name",
+            "role_label",
+            "photo",
+            "language",
+            "timezone",
+            "emergency_alerts",
+            "daily_summary_time",
+            "units",
+        ]
+
+    def validate_timezone(self, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            raise serializers.ValidationError("Unknown time zone.") from exc
+        return value

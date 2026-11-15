@@ -65,9 +65,7 @@ function InputListDialog({
   return (
     <>
       <Dialog>
-        <DialogTrigger asChild>
-          <Button>{children}</Button>
-        </DialogTrigger>
+        <DialogTrigger render={<Button />}>{children}</DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Write or paste a list of Hanzi</DialogTitle>
@@ -97,13 +95,9 @@ function InputListDialog({
             </form>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant={'destructive'}>Cancel</Button>
-            </DialogClose>
-            <DialogClose asChild>
-              <Button  type="submit" form="form-input-list">
-                Continue
-              </Button>
+            <DialogClose render={<Button variant={'destructive'} />}>Cancel</DialogClose>
+            <DialogClose render={<Button type="submit" form="form-input-list" />}>
+              Continue
             </DialogClose>
           </DialogFooter>
         </DialogContent>
