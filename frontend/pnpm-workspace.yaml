@@ -3,6 +3,9 @@ packages:
   - 'packages/*'
 allowBuilds:
   esbuild: true
+  electron: true
+  sharp: true
+  electron-winstaller: false
   msw: false
 minimumReleaseAgeExclude:
   - brace-expansion@1.1.16 || 5.0.8

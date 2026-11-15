@@ -1,3 +1,5 @@
+import { Yiri3D } from "@/components/yira/Yiri3D"
+
 const SPARKLES = [
   { src: "/yira/login/sparkle-1.svg", size: 16, left: 560, top: 170 },
   { src: "/yira/login/sparkle-2.svg", size: 22, left: 1040, top: 180 },
@@ -52,10 +54,11 @@ export function LoginMascotScene() {
           className="absolute left-[640px] top-[293px] size-[490px] max-w-none"
         />
         <div className="absolute left-[560px] top-[131px] flex h-[830px] w-[781px] items-center justify-center">
-          <img
-            src="/yira/login/mascot-waving.png"
-            alt=""
-            className="motion-safe-only h-[709.5px] w-[645.3px] max-w-none rotate-[-12.21deg] animate-wave object-cover"
+          <Yiri3D
+            mode="wave"
+            className="h-[710px] w-[645px]"
+            fallbackSrc="/yira/login/mascot-waving.png"
+            alt="Yiri, la mascota de YIRA, saludando"
           />
         </div>
       </div>
@@ -63,10 +66,11 @@ export function LoginMascotScene() {
 
       {/* Mobile / tablet composition */}
       <div className="relative mt-4 flex items-end justify-center gap-2 lg:hidden">
-        <img
-          src="/yira/login/mascot-waving.png"
+        <Yiri3D
+          mode="wave"
+          className="h-[170px] w-[150px]"
+          fallbackSrc="/yira/login/mascot-waving.png"
           alt="Yiri, la mascota de YIRA, saludando"
-          className="motion-safe-only h-[170px] w-auto rotate-[-12.21deg] animate-wave object-contain"
         />
         <SpeechBubble className="mb-16 w-auto" />
       </div>

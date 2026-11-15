@@ -5,5 +5,15 @@
   "packageManager": "pnpm@11.18.0",
   "engines": {
     "node": "24.x"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter client dev",
+    "dev:mobile": "pnpm --filter mobile dev",
+    "dev:desktop": "pnpm --filter desktop dev",
+    "build": "pnpm -r --filter=./apps/* build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm --filter @yira/app typecheck",
+    "mobile:icons": "pnpm --filter mobile icons",
+    "desktop:dist": "pnpm --filter desktop dist"
   }
 }

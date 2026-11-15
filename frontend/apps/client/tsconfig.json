@@ -7,7 +7,7 @@
     "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["../../packages/yira-app/src/*"]
     }
   }
 }

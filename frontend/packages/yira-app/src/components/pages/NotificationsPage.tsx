@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
 import { GlassPanel } from "@/components/yira/GlassPanel"
 import { PageHeading } from "@/components/yira/PageHeading"
+import { Yiri3D } from "@/components/yira/Yiri3D"
 import { ErrorState } from "@/components/yira/QueryState"
 import { AlertRow } from "@/components/yira/notifications/AlertRow"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -71,8 +72,13 @@ export function NotificationsPage() {
         </GlassPanel>
 
         <div className="hidden justify-center md:flex">
-          <div className="w-[260px] motion-safe-only animate-float">
-            <img src="/yira/notifications/mascot.png" alt="Yiri, la mascota de YIRA, saludando" className="w-full" />
+          <div className="h-[340px] w-[260px]">
+            <Yiri3D
+              mode="wave"
+              className="size-full"
+              fallbackSrc="/yira/notifications/mascot.png"
+              alt="Yiri, la mascota de YIRA, saludando"
+            />
           </div>
         </div>
       </div>

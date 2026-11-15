@@ -4,6 +4,7 @@ import { useCrewMember, useSystems } from "@/api/hooks"
 import type { CurrentIssue, SystemKey, SystemScore } from "@/api/types"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CrewPortrait } from "@/components/yira/CrewPortrait"
+import { Yiri3D } from "@/components/yira/Yiri3D"
 import { GlassPanel } from "@/components/yira/GlassPanel"
 import { ErrorState } from "@/components/yira/QueryState"
 import { EarthSummaryDialog } from "@/components/yira/crew/EarthSummaryDialog"
@@ -98,14 +99,16 @@ export function CrewDetailPage() {
 
   return (
     <GlassPanel className="relative w-full max-w-[978px] overflow-hidden lg:h-[562px]">
-      {/* Peeking Yiri (Figma "Yiri" inside the panel mask) */}
-      <img
-        src={YIRI_SRC[member.status]}
-        alt={YIRI_ALT[member.status]}
-        width={467}
-        height={560}
-        className="pointer-events-none absolute top-[38px] right-[-212px] hidden h-[560px] w-[467px] max-w-none object-contain object-left-top lg:block"
-      />
+      {/* Peeking 3D Yiri (inside the panel mask) */}
+      <div className="pointer-events-none absolute top-[38px] right-[-150px] hidden h-[560px] w-[467px] lg:block">
+        <Yiri3D
+          status={member.status}
+          mode="idle"
+          className="size-full"
+          fallbackSrc={YIRI_SRC[member.status]}
+          alt={YIRI_ALT[member.status]}
+        />
+      </div>
 
       <div className="relative flex flex-col items-center gap-8 px-5 pt-8 pb-8 lg:flex-row lg:items-start lg:gap-[49px] lg:pt-[85px] lg:pr-0 lg:pb-0 lg:pl-[76px]">
         <CrewPortrait

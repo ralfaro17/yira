@@ -14,6 +14,7 @@ import os
 from enum import Enum
 from pathlib import Path
 
+from corsheaders.defaults import default_headers as default_cors_headers
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -118,15 +119,24 @@ HEADLESS_FRONTEND_URLS = {
 
 # --- django-allauth (headless, session-based, username/email + password) ---
 HEADLESS_ONLY = True
-HEADLESS_CLIENTS = ("browser",)  # session cookies only, no app tokens
+# "browser": cookie session (web + mobile PWA/TWA, same origin).
+# "app": X-Session-Token header (desktop Electron app, served from app://yira).
+HEADLESS_CLIENTS = ("browser", "app")
 ACCOUNT_LOGIN_METHODS = {"username", "email"}
 ACCOUNT_SIGNUP_FIELDS = ["username*", "email*", "password1*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_UNIQUE_EMAIL = True
 
 # --- CORS (frontend dev server sends cookies cross-origin) ---
-CORS_ALLOWED_ORIGINS: list[str] = list(_trusted_origins)
+CORS_ALLOWED_ORIGINS: list[str] = [
+    *_trusted_origins,
+    "app://yira",  # packaged desktop app (Electron custom protocol)
+    "http://localhost:5176",  # desktop renderer dev server (electron-vite)
+    "http://127.0.0.1:5176",
+    *[o.strip() for o in os.getenv("EXTRA_CORS_ORIGINS", "").split(",") if o.strip()],
+]
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = (*default_cors_headers, "x-session-token")
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -263,6 +273,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
+        # allauth headless "app" client (desktop): X-Session-Token header.
+        "allauth.headless.contrib.rest_framework.authentication.XSessionTokenAuthentication",
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 500,

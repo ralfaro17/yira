@@ -2,19 +2,19 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://taguer.onrender.com/api/:path*"
+      "destination": "https://yira.onrender.com/api/:path*"
     },
     {
       "source": "/_allauth/:path*",
-      "destination": "https://taguer.onrender.com/_allauth/:path*"
+      "destination": "https://yira.onrender.com/_allauth/:path*"
     },
     {
       "source": "/accounts/:path*",
-      "destination": "https://taguer.onrender.com/accounts/:path*"
+      "destination": "https://yira.onrender.com/accounts/:path*"
     },
     {
       "source": "/admin/:path*",
-      "destination": "https://taguer.onrender.com/admin/:path*"
+      "destination": "https://yira.onrender.com/admin/:path*"
     },
     {
       "source": "/:path*",

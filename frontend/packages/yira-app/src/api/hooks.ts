@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 
-import { api, ensureCsrf } from "./client"
+import { api, clearSessionToken, ensureCsrf, getSessionToken, setSessionToken } from "./client"
+import { authBase, getApiConfig } from "./config"
 import type { Alert, Dashboard, Me, Paginated, SessionResponse, SessionUser, SystemsResponse } from "./types"
-
-const AUTH = "/_allauth/browser/v1/auth"
 
 export const queryKeys = {
   session: ["session"] as const,
@@ -14,6 +13,8 @@ export const queryKeys = {
   me: ["me"] as const,
 }
 
+const isAppMode = () => getApiConfig().mode === "app"
+
 // --------------------------------------------------------------------- auth
 
 /** Current allauth session user, or `null` when logged out. */
@@ -21,11 +22,17 @@ export function useSession() {
   return useQuery({
     queryKey: queryKeys.session,
     queryFn: async (): Promise<SessionUser | null> => {
+      if (isAppMode() && !(await getSessionToken())) return null
       try {
-        const { data } = await api.get<SessionResponse>(`${AUTH}/session`)
+        const { data } = await api.get<SessionResponse>(`${authBase()}/session`)
         return data.data.user
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) return null
+        const status = axios.isAxiosError(error) ? error.response?.status : undefined
+        // 401: not logged in; 410: the app session token expired.
+        if (status === 401 || status === 410) {
+          if (isAppMode()) await clearSessionToken()
+          return null
+        }
         throw error
       }
     },
@@ -40,15 +47,22 @@ export interface LoginInput {
   remember: boolean
 }
 
+type LoginResponse = SessionResponse & { meta: { session_token?: string } }
+
 export function useLogin() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ login, password, remember }: LoginInput) => {
       await ensureCsrf()
       const credentials = login.includes("@") ? { email: login } : { username: login }
-      const { data } = await api.post<SessionResponse>(`${AUTH}/login`, { ...credentials, password })
-      // allauth rotates the CSRF token on login; the cookie is updated automatically.
-      await api.post("/api/health/me/session/", { remember })
+      const { data } = await api.post<LoginResponse>(`${authBase()}/login`, { ...credentials, password })
+      if (isAppMode()) {
+        if (!data.meta.session_token) throw new Error("El servidor no devolvió un token de sesión.")
+        await setSessionToken(data.meta.session_token, remember)
+      } else {
+        // allauth rotates the CSRF token on login; the cookie is updated automatically.
+        await api.post("/api/health/me/session/", { remember })
+      }
       return data.data.user
     },
     onSuccess: (user) => {
@@ -64,15 +78,19 @@ export function useLogout() {
     mutationFn: async () => {
       await ensureCsrf()
       try {
-        await api.delete(`${AUTH}/session`)
+        await api.delete(`${authBase()}/session`)
       } catch (error) {
         // allauth answers a successful logout with 401 ("not authenticated anymore").
         if (!(axios.isAxiosError(error) && error.response?.status === 401)) throw error
+      } finally {
+        if (isAppMode()) await clearSessionToken()
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       qc.clear()
       qc.setQueryData(queryKeys.session, null)
+      // Drop health data the mobile service worker cached for offline use.
+      if ("caches" in window) await caches.delete("yira-api").catch(() => false)
     },
   })
 }
@@ -81,7 +99,7 @@ export function useRequestPasswordReset() {
   return useMutation({
     mutationFn: async (email: string) => {
       await ensureCsrf()
-      await api.post(`/_allauth/browser/v1/auth/password/request`, { email })
+      await api.post(`${authBase()}/password/request`, { email })
     },
   })
 }

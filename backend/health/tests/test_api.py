@@ -343,3 +343,55 @@ class DesignSupportApiTests(TestCase):
         r = self.client.post("/api/health/me/session/", {"remember": False}, format="json")
         self.assertEqual(r.status_code, 200)
         self.assertTrue(self.client.session.get_expire_at_browser_close())
+
+
+class AppClientTokenAuthTests(TestCase):
+    """allauth headless "app" client, used by the desktop (Electron) app."""
+
+    def setUp(self):
+        self.user = User.objects.create_user("astro", "astro@example.com", "Sup3r-secret-pw")
+        CrewMember.objects.create(owner=self.user, name="Rosa")
+        self.client = APIClient(enforce_csrf_checks=True)
+
+    def login(self):
+        r = self.client.post(
+            "/_allauth/app/v1/auth/login",
+            {"username": "astro", "password": "Sup3r-secret-pw"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 200, r.content)
+        return r.json()["meta"]["session_token"]
+
+    def test_token_login_and_api_access(self):
+        token = self.login()
+        api = APIClient(enforce_csrf_checks=True)  # fresh client: no cookies at all
+        api.credentials(HTTP_X_SESSION_TOKEN=token)
+        r = api.get("/api/health/dashboard/")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["totals"]["crew"], 1)
+        # Unsafe methods work without CSRF when authenticated by token.
+        self.assertEqual(api.post("/api/health/alerts/acknowledge-all/").status_code, 200)
+        self.assertEqual(api.get("/_allauth/app/v1/auth/session").status_code, 200)
+
+    def test_bad_or_missing_token_rejected(self):
+        api = APIClient()
+        self.assertIn(api.get("/api/health/dashboard/").status_code, {401, 403})
+        api.credentials(HTTP_X_SESSION_TOKEN="not-a-token")
+        self.assertIn(api.get("/api/health/dashboard/").status_code, {401, 403})
+
+    def test_logout_invalidates_token(self):
+        token = self.login()
+        api = APIClient()
+        api.credentials(HTTP_X_SESSION_TOKEN=token)
+        api.delete("/_allauth/app/v1/auth/session")
+        self.assertIn(api.get("/api/health/dashboard/").status_code, {401, 403})
+
+    def test_cors_allows_desktop_origin_and_token_header(self):
+        r = self.client.options(
+            "/api/health/dashboard/",
+            HTTP_ORIGIN="app://yira",
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD="GET",
+            HTTP_ACCESS_CONTROL_REQUEST_HEADERS="x-session-token",
+        )
+        self.assertEqual(r.headers.get("Access-Control-Allow-Origin"), "app://yira")
+        self.assertIn("x-session-token", r.headers.get("Access-Control-Allow-Headers", ""))

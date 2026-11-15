@@ -1,0 +1,30 @@
+appId: app.yira.desktop
+productName: YIRA
+copyright: YIRA · NASA Space Apps Challenge 2026
+directories:
+  output: release/${version}
+  buildResources: build
+files:
+  - out/**
+  - build/icon.png
+  - package.json
+# The renderer is fully bundled by electron-vite, so no node_modules are shipped.
+includeSubNodeModules: false
+asar: true
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+linux:
+  target: [AppImage, deb]
+  category: Science
+  icon: build/icon.png
+  maintainer: YIRA team
+  synopsis: Monitoreo de salud de la tripulación
+win:
+  target: [nsis]
+  icon: build/icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+mac:
+  target: [dmg]
+  category: public.app-category.medical
+  icon: build/icon.png

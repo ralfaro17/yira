@@ -1,0 +1,18 @@
+{
+  "headers": [
+    {
+      "source": "/.well-known/assetlinks.json",
+      "headers": [{ "key": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    }
+  ],
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://yira.onrender.com/api/:path*" },
+    { "source": "/_allauth/:path*", "destination": "https://yira.onrender.com/_allauth/:path*" },
+    { "source": "/admin/:path*", "destination": "https://yira.onrender.com/admin/:path*" },
+    { "source": "/((?!\\.well-known/).*)", "destination": "/index.html" }
+  ]
+}

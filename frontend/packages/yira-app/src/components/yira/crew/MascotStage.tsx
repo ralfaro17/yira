@@ -5,6 +5,7 @@ import type { CrewStatus } from "@/api/types"
 import { cn } from "@/lib/utils"
 
 import { YIRI_ALT, YIRI_SRC } from "./mascot"
+import { Yiri3D } from "@/components/yira/Yiri3D"
 
 /** Platform body gradient (status colour → black at 52%), Figma 2:90 / 34:27 / 2:217. */
 const PLATFORM_FROM: Record<CrewStatus, string> = {
@@ -62,12 +63,14 @@ export function MascotStage({
         height={160.6}
         className="pointer-events-none absolute top-[248.7px] left-[-59.3px] max-w-none"
       />
-      <div className="absolute animate-float motion-safe-only" style={MASCOT_BOX[status]}>
-        <img
+      <div className="absolute" style={MASCOT_BOX[status]}>
+        <Yiri3D
           key={status}
-          src={YIRI_SRC[status]}
+          status={status}
+          mode="idle"
+          className="size-full"
+          fallbackSrc={YIRI_SRC[status]}
           alt={YIRI_ALT[status]}
-          className="size-full max-w-none animate-in object-contain duration-500 fade-in-0"
         />
       </div>
       {scanHref && (

@@ -2,6 +2,7 @@ import { Progress } from "@base-ui/react/progress"
 
 import type { CrewStatus } from "@/api/types"
 import { ProgressIndicator, ProgressTrack } from "@/components/ui/progress"
+import { Yiri3D } from "@/components/yira/Yiri3D"
 import { STATUS } from "@/lib/status"
 import { cn } from "@/lib/utils"
 
@@ -80,12 +81,15 @@ export function ScanStage({
           </div>
         </div>
 
-        {/* Mascot: float on the wrapper, sway (rotate) on the image */}
-        <div className="absolute left-[64.5px] top-0 h-[338px] w-[282px] motion-safe-only animate-float">
-          <img
-            src={MASCOT[status]}
+        {/* 3D Mascot: horizontal spin while scanning, organic idle otherwise */}
+        <div className="absolute left-[64.5px] top-0 h-[338px] w-[282px]">
+          <Yiri3D
+            isScanning={animate}
+            mode={animate ? "spin" : "idle"}
+            status={status}
+            className="size-full"
+            fallbackSrc={MASCOT[status]}
             alt={`Yiri, la mascota de YIRA, escaneando a ${name}`}
-            className="size-full object-contain motion-safe-only animate-sway"
           />
         </div>
 

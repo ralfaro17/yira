@@ -3,6 +3,9 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 
+/* Consumed as source by apps outside this folder: scan this package for classes. */
+@source ".";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

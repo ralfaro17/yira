@@ -3,8 +3,8 @@ import { Outlet } from "react-router"
 import { AppHeader } from "./AppHeader"
 import { SpaceBackground } from "./SpaceBackground"
 
-/** Frame shell: space background, header, centred 1133px content column. */
-export function AppLayout() {
+/** Web/desktop frame shell: space background, top header with nav, centred 1133px column. */
+export function DesktopLayout() {
   return (
     <div className="relative min-h-svh overflow-x-clip">
       <SpaceBackground />

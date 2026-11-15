@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { GlassChip } from "@/components/yira/home/GlassChip"
 import { newestScan, worstImmuneStatus } from "@/components/yira/home/homeStats"
 import { StatsBar } from "@/components/yira/home/StatsBar"
+import { Yiri3D } from "@/components/yira/Yiri3D"
 import { ErrorState } from "@/components/yira/QueryState"
 import { useGreetingName } from "@/components/yira/welcome/useGreetingName"
 import { STATUS } from "@/lib/status"
@@ -91,12 +92,14 @@ export function HomePage() {
           aria-hidden
           className="absolute bottom-[6%] left-1/2 h-[12%] w-[62%] -translate-x-1/2 rounded-[50%] border border-glass-border bg-glass shadow-[0_0_60px_10px_rgba(0,99,248,0.45)] backdrop-blur-[20px]"
         />
-        {/* Wrapper centres; the image itself animates (animate-float drives the `translate` property). */}
+        {/* Wrapper centres; 3D interactive Yiri floating over the platform. */}
         <div className="absolute inset-x-0 bottom-[11%] flex h-[78%] justify-center">
-          <img
-            src="/yira/login/mascot-waving.png"
+          <Yiri3D
+            mode="wave"
+            interactive
+            className="h-full w-full"
+            fallbackSrc="/yira/login/mascot-waving.png"
             alt="Yiri, la mascota de YIRA"
-            className="motion-safe-only h-full w-auto animate-float object-contain"
           />
         </div>
 

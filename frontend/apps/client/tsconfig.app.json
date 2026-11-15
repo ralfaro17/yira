@@ -25,9 +25,7 @@
     /* ShadCN */
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["../../packages/yira-app/src/*"]
     }
   },
   "include": ["src"]

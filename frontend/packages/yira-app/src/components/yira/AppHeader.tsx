@@ -52,27 +52,39 @@ export function AppHeader({ showNav = true }: { showNav?: boolean }) {
       )}
 
       <div className={cn("ml-auto flex items-center gap-[14px]", showNav && "md:ml-[86px]")}>
-        <Link
-          to="/notificaciones"
-          aria-label={unread ? `Notificaciones (${unread} sin leer)` : "Notificaciones"}
-          className="relative size-9 rounded-full"
-        >
-          <img src="/yira/common/bell.png" alt="" className="size-full object-cover" />
-          {/* The bell asset has a static "1" badge baked in: cover it with the live count. */}
-          <span
-            aria-hidden
-            className={cn(
-              "absolute right-[3px] top-[4.5px] flex size-[15px] items-center justify-center rounded-full text-[9px] font-extrabold leading-none text-white",
-              unread > 0 ? "bg-[#e22424]" : "bg-space",
-            )}
-          >
-            {unread > 0 ? (unread > 9 ? "9+" : unread) : null}
-          </span>
-        </Link>
-        <Link to="/perfil" aria-label="Perfil" className="size-[33px] rounded-full">
-          <img src="/yira/common/profile.png" alt="" className="size-full object-cover" />
-        </Link>
+        <NotificationBell unread={unread} />
+        <ProfileLink />
       </div>
     </header>
+  )
+}
+
+/** Bell linking to /notificaciones. The asset has a static "1" badge baked in: cover it with the live count. */
+export function NotificationBell({ unread, className }: { unread: number; className?: string }) {
+  return (
+    <Link
+      to="/notificaciones"
+      aria-label={unread ? `Notificaciones (${unread} sin leer)` : "Notificaciones"}
+      className={cn("relative size-9 shrink-0 rounded-full", className)}
+    >
+      <img src="/yira/common/bell.png" alt="" className="size-full object-cover" />
+      <span
+        aria-hidden
+        className={cn(
+          "absolute right-[3px] top-[4.5px] flex size-[15px] items-center justify-center rounded-full text-[9px] font-extrabold leading-none text-white",
+          unread > 0 ? "bg-[#e22424]" : "bg-space",
+        )}
+      >
+        {unread > 0 ? (unread > 9 ? "9+" : unread) : null}
+      </span>
+    </Link>
+  )
+}
+
+export function ProfileLink({ className }: { className?: string }) {
+  return (
+    <Link to="/perfil" aria-label="Perfil" className={cn("size-[33px] shrink-0 rounded-full", className)}>
+      <img src="/yira/common/profile.png" alt="" className="size-full object-cover" />
+    </Link>
   )
 }

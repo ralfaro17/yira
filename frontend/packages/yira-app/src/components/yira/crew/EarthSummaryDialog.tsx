@@ -1,3 +1,4 @@
+import { copyText } from "@/platform"
 import { Copy } from "lucide-react"
 import { toast } from "sonner"
 
@@ -17,7 +18,7 @@ import { cn } from "@/lib/utils"
 export function EarthSummaryDialog({ name, summary, className }: { name: string; summary: string; className?: string }) {
   async function copy() {
     try {
-      await navigator.clipboard.writeText(summary)
+      await copyText(summary)
       toast.success("Resumen copiado al portapapeles")
     } catch {
       toast.error("No se pudo copiar el resumen")
