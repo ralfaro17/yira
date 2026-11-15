@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import { EyeOffIcon } from "lucide-react"
 import { Navigate, useLocation, useNavigate } from "react-router"
 import { toast } from "sonner"
@@ -16,6 +16,7 @@ import { SpaceBackground } from "@/components/yira/SpaceBackground"
 import { ForgotPasswordDialog } from "@/components/yira/login/ForgotPasswordDialog"
 import { LoginInputBox, loginInputClass } from "@/components/yira/login/LoginInputBox"
 import { LoginMascotScene } from "@/components/yira/login/LoginMascotScene"
+import { cn } from "@/lib/utils"
 
 /** Figma 49:68 "Inicio de sesión personaje animado saludando". */
 export function LoginPage() {
@@ -30,8 +31,16 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [forgotOpen, setForgotOpen] = useState(false)
 
+  const [isMounted, setIsMounted] = useState(false)
+  const [isExiting, setIsExiting] = useState(false)
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setIsMounted(true))
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
   // Already signed in (and not in the middle of this page's own login flow).
-  if (session.data && !login.isPending && !login.isSuccess) {
+  if (session.data && !login.isPending && !login.isSuccess && !isExiting) {
     return <Navigate to="/" replace />
   }
 
@@ -42,7 +51,10 @@ export function LoginPage() {
     event.preventDefault()
     try {
       await login.mutateAsync({ login: identifier.trim(), password, remember })
-      navigate(from && from !== "/iniciar-sesion" ? from : "/bienvenida", { replace: true })
+      setIsExiting(true)
+      setTimeout(() => {
+        navigate(from && from !== "/iniciar-sesion" ? from : "/bienvenida", { replace: true })
+      }, 550)
     } catch (error) {
       toast.error(errorMessage(error, "No pudimos iniciar sesión. Revisa tus datos."))
     }
@@ -57,10 +69,17 @@ export function LoginPage() {
           <YiraLogo />
         </header>
 
-        <LoginMascotScene />
+        <LoginMascotScene isMounted={isMounted} isExiting={isExiting} />
 
         <main className="relative z-10 mt-6 flex flex-1 flex-col lg:mt-[33px]">
-          <GlassPanel className="w-full max-w-[440px] gap-[14px] px-6 py-7 max-lg:mx-auto md:px-[34px]">
+          <GlassPanel
+            className={cn(
+              "w-full max-w-[440px] gap-[14px] px-6 py-7 max-lg:mx-auto md:px-[34px] transition-all duration-700 ease-out",
+              !isMounted && "translate-y-8 opacity-0 scale-[0.98]",
+              isMounted && !isExiting && "translate-y-0 opacity-100 scale-100",
+              isExiting && "-translate-y-6 opacity-0 scale-[0.97] duration-500 ease-in",
+            )}
+          >
             <span className="w-fit rounded-pill bg-brand/35 px-[14px] py-[5px] text-[15px] font-medium">
               Acceso tripulación
             </span>

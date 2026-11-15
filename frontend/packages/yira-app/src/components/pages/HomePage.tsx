@@ -1,4 +1,5 @@
-import { Link } from "react-router"
+import { useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router"
 
 import { useDashboard } from "@/api/hooks"
 import { buttonVariants } from "@/components/ui/button"
@@ -17,6 +18,23 @@ import { cn } from "@/lib/utils"
 export function HomePage() {
   const { name, isPending: namePending } = useGreetingName()
   const dashboard = useDashboard()
+  const navigate = useNavigate()
+  const [isMounted, setIsMounted] = useState(false)
+  const [isExiting, setIsExiting] = useState(false)
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setIsMounted(true))
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  function handleNavigate(to: string) {
+    if (isExiting) return
+    setIsExiting(true)
+    setTimeout(() => {
+      navigate(to)
+    }, 450)
+  }
+
   const data = dashboard.data
   const loading = dashboard.isPending
   const totals = data?.totals
@@ -50,6 +68,10 @@ export function HomePage() {
 
         <Link
           to="/evaluacion"
+          onClick={(e) => {
+            e.preventDefault()
+            handleNavigate("/evaluacion")
+          }}
           className={cn(
             buttonVariants(),
             "h-auto rounded-pill bg-brand px-7 py-3.5 text-lg font-medium text-white shadow-[0px_8px_24px_0px_rgba(0,99,247,0.6)] hover:bg-brand/90 md:text-xl",
@@ -80,13 +102,31 @@ export function HomePage() {
       </section>
 
       {/* Mars + mascot on its platform + floating chips */}
-      <section aria-label="Resumen en vivo" className="relative mx-auto aspect-square w-full max-w-[460px]">
-        <img
-          src="/yira/login/mars.png"
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 w-[190%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-80"
-        />
+      <section
+        aria-label="Resumen en vivo"
+        className={cn(
+          "relative mx-auto aspect-square w-full max-w-[460px] transition-all duration-700 ease-out",
+          !isMounted && "scale-95 opacity-0",
+          isMounted && !isExiting && "scale-100 opacity-100",
+          isExiting && "scale-90 opacity-0 duration-400 ease-in",
+        )}
+      >
+        {/* Animated Mars: slides in and un-vanishes on load, slides down and vanishes on exit */}
+        <div
+          className={cn(
+            "pointer-events-none absolute left-1/2 top-1/2 w-[190%] max-w-none -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-out",
+            !isMounted && "translate-y-8 scale-75 opacity-0 blur-md",
+            isMounted && !isExiting && "translate-y-0 scale-100 opacity-80 blur-0",
+            isExiting && "translate-y-16 scale-75 opacity-0 blur-lg duration-500 ease-in",
+          )}
+        >
+          <img
+            src="/yira/login/mars.png"
+            alt=""
+            aria-hidden
+            className="size-full object-contain motion-safe-only animate-mars-float"
+          />
+        </div>
         {/* Platform under the mascot. */}
         <div
           aria-hidden
