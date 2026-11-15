@@ -42,6 +42,11 @@ class Command(BaseCommand):
             help="Comma-separated, or 'none'.",
         )
         parser.add_argument(
+            "--if-empty",
+            action="store_true",
+            help="Do nothing if the user already has crew in this mission (safe on every deploy).",
+        )
+        parser.add_argument(
             "--reset",
             action="store_true",
             help="Delete this user's crew for this mission first.",
@@ -77,6 +82,10 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"Created user '{user.username}' with the given password."
             )
+
+        if opts["if_empty"] and CrewMember.objects.filter(owner=user, mission=opts["mission"]).exists():
+            self.stdout.write(f"'{user.username}' already has crew in '{opts['mission']}'; skipping.")
+            return
 
         if opts["reset"]:
             deleted, _ = CrewMember.objects.filter(

@@ -14,6 +14,7 @@ import os
 from enum import Enum
 from pathlib import Path
 
+import dj_database_url
 from corsheaders.defaults import default_headers as default_cors_headers
 from dotenv import load_dotenv
 
@@ -24,7 +25,18 @@ class AppMode(str, Enum):
     PRODUCTION = "production"
 
 mode_str = os.getenv("APP_ENVIRONMENT")
-FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+
+def env_list(name: str) -> list[str]:
+    """Comma-separated environment variable → list of non-empty, stripped values."""
+    return [v.strip().rstrip("/") for v in os.getenv(name, "").split(",") if v.strip()]
+
+
+# Deployed frontends (Vercel): web + mobile PWA, e.g.
+# FRONTEND_URLS=https://yira.vercel.app,https://yira-mobile.vercel.app
+# They call the API through Vercel rewrites, so the browser Origin is the Vercel domain.
+FRONTEND_URLS: list[str] = env_list("FRONTEND_URLS") or env_list("FRONTEND_URL")
+FRONTEND_URL = FRONTEND_URLS[0] if FRONTEND_URLS else "http://localhost:5173"
 
 if mode_str is None:
     raise RuntimeError("APP_ENVIRONMENT is required.")
@@ -42,12 +54,16 @@ IS_DEVELOPMENT = APP_MODE is AppMode.DEVELOPMENT
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-STATIC_ROOT = "staticfiles"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv("SECRET_KEY") or ""
+if not SECRET_KEY:
+    if not IS_DEVELOPMENT:
+        raise RuntimeError("SECRET_KEY is required in production.")
+    SECRET_KEY = "django-insecure-development-only-key"
 
 # LLAVES DEL STRIPE
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
@@ -57,11 +73,10 @@ STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True if IS_DEVELOPMENT else False
 
-allowed_hosts_env = os.getenv("ALLOWED_HOSTS")
-if allowed_hosts_env:
-    ALLOWED_HOSTS: list[str] = [h.strip() for h in allowed_hosts_env.split(",") if h.strip()]
-else:
-    ALLOWED_HOSTS = ["yira.onrender.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS: list[str] = env_list("ALLOWED_HOSTS") or ["yira.onrender.com", "localhost", "127.0.0.1"]
+# Render sets the service's public hostname (e.g. yira.onrender.com) automatically.
+if render_host := os.getenv("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS.append(render_host)
 
 if IS_DEVELOPMENT:
     ALLOWED_HOSTS = ["*"]
@@ -76,10 +91,8 @@ _trusted_origins: list[str] = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
-_frontend_url = os.getenv("FRONTEND_URL", "")
-if _frontend_url:
-    _trusted_origins.append(_frontend_url)
-CSRF_TRUSTED_ORIGINS: list[str] = _trusted_origins
+_trusted_origins += FRONTEND_URLS
+CSRF_TRUSTED_ORIGINS: list[str] = list(dict.fromkeys(_trusted_origins))
 
 # Application definition
 # Uses the stock django.contrib.auth User model (no AUTH_USER_MODEL override).
@@ -141,6 +154,7 @@ CORS_ALLOW_HEADERS = (*default_cors_headers, "x-session-token")
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -181,17 +195,27 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# ! To use PostgreSQL
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+# PostgreSQL. On Render, DATABASE_URL comes from the managed database;
+# locally (devcontainer) the DB_* variables are used.
+if database_url := os.getenv("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.parse(
+            database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME", ""),
+            "USER": os.getenv("DB_USER", ""),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", ""),
+            "PORT": os.getenv("DB_PORT", ""),
+        }
+    }
 
 # ! To use SQLite
 """ DATABASES = {
@@ -240,6 +264,18 @@ STATIC_URL = "static/"
 
 STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").is_dir() else []
 
+# WhiteNoise serves the collected static files (Django admin) in production.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if IS_DEVELOPMENT
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        )
+    },
+}
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -259,14 +295,40 @@ if IS_DEVELOPMENT:
     # EMAIL_HOST_PASSWORD = os.getenv('DEVELOPMENT_EMAIL_HOST_PASSWORD')
     # EMAIL_PORT = os.getenv('DEVELOPMENT_EMAIL_PORT')
 else:
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     # use empty string defaults to ensure variables are str (not Optional[str])
     EMAIL_HOST = os.getenv('EMAIL_HOST', '')
-    EMAIL_PORT = os.getenv('EMAIL_PORT', '')
+    EMAIL_PORT = os.getenv('EMAIL_PORT', '587')
     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '') or 'YIRA <no-reply@yira.app>'
     EMAIL_USE_TLS = True
+    if not EMAIL_HOST:
+        # No SMTP configured: log emails (e.g. password resets) instead of failing.
+        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# --- Production hardening (Render terminates TLS and forwards X-Forwarded-Proto) ---
+if not IS_DEVELOPMENT:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SECURE_REDIRECT_EXEMPT = [r"^healthz/?$"]  # Render health checks
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", str(60 * 60 * 24 * 30)))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False  # *.onrender.com is shared
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
+    # HSTS subdomains/preload are not ours to set on the shared *.onrender.com domain.
+    SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "INFO" if not IS_DEVELOPMENT else "WARNING"},
+    "loggers": {
+        "django": {"handlers": ["console"], "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"), "propagate": False},
+    },
+}
 
 # REST FRAMEWORK CONFIG
 REST_FRAMEWORK = {
@@ -280,5 +342,5 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 500,
 }
 
-DOMAIN = 'localhost:5173'
+DOMAIN = FRONTEND_URL.split("://", 1)[-1]
 SITE_NAME = 'Yira'

@@ -1,0 +1,63 @@
+# Render Blueprint for the YIRA backend (Django API + PostgreSQL).
+# Render dashboard → New → Blueprint → select this repository.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# The frontends (web + mobile PWA) are deployed on Vercel and reach this API through
+# Vercel rewrites to https://<service>.onrender.com (see frontend/apps/*/vercel.json).
+
+databases:
+  - name: yira-db
+    plan: free # free Render Postgres expires after 30 days; use basic-256mb or higher to keep data
+    databaseName: yira
+    user: yira
+    postgresMajorVersion: "17"
+    ipAllowList: [] # internal connections only
+
+services:
+  - type: web
+    name: yira # → https://yira.onrender.com (if the name is taken, update the Vercel rewrites)
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: ./scripts/render-build.sh
+    startCommand: ./scripts/render-start.sh
+    healthCheckPath: /healthz/
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - backend/**
+        - render.yaml
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.14.0"
+      - key: APP_ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: yira-db
+          property: connectionString
+      # Deployed Vercel frontends, comma-separated (needed for CSRF on login/logout and
+      # password-reset links), e.g. https://yira.vercel.app,https://yira-mobile.vercel.app
+      - key: FRONTEND_URLS
+        sync: false
+      # Gunicorn workers; 2 fits the 512 MB free instance (pandas/NumPy per worker).
+      - key: WEB_CONCURRENCY
+        value: "2"
+      # Optional demo data on first boot (leave DEMO_PASSWORD empty to skip).
+      - key: DEMO_USERNAME
+        value: demo
+      - key: DEMO_EMAIL
+        value: demo@example.com
+      - key: DEMO_PASSWORD
+        sync: false
+      # Optional SMTP for password-reset emails (without EMAIL_HOST they are only logged).
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
