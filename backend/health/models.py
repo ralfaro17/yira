@@ -130,6 +130,29 @@ class Alert(models.Model):
         return f"[{self.severity}] {self.metric}: {self.message}"
 
 
+class Scan(models.Model):
+    """A completed health scan of a crew member, run by an operator from the app."""
+
+    crew_member = models.ForeignKey(
+        CrewMember, on_delete=models.CASCADE, related_name="scans"
+    )
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="scans",
+    )
+    completed_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        ordering = ["-completed_at"]
+        get_latest_by = "completed_at"
+
+    def __str__(self) -> str:
+        return f"Scan of {self.crew_member} at {self.completed_at:%Y-%m-%d %H:%M}"
+
+
 class OperatorProfile(models.Model):
     """Display info and preferences for a ground-control operator (one per user)."""
 

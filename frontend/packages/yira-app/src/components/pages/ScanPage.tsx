@@ -1,14 +1,15 @@
-import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router"
 
-import { queryKeys, useCrewMember, useLatestVitals, useSystems } from "@/api/hooks"
+import { useCrewMember, useLatestVitals, useRecordScan, useSystems } from "@/api/hooks"
+import { errorMessage } from "@/api/client"
 import type { DashboardCrew } from "@/api/types"
 import { ErrorState, LoadingPanels } from "@/components/yira/QueryState"
 import { ScanLastEvaluationPanel, ScanLivePanel, ScanProgressPanel, type ScanPhase } from "@/components/yira/scan/ScanPanels"
 import { ScanStage } from "@/components/yira/scan/ScanStage"
 import { SCAN_STEPS, currentStep } from "@/components/yira/scan/scanSteps"
 import { crewTitle } from "@/lib/status"
+import { toast } from "@/lib/toast"
 
 /** Full scan takes ~10 s: 1% every 100 ms. */
 const TICK_MS = 100
@@ -35,7 +36,8 @@ export function ScanPage() {
 }
 
 function Scan({ member }: { member: DashboardCrew }) {
-  const qc = useQueryClient()
+  const recordScan = useRecordScan()
+  const { mutate: saveScan } = recordScan
   const [progress, setProgress] = useState(0)
   const [phase, setPhase] = useState<ScanPhase>("running")
   const running = phase === "running"
@@ -52,12 +54,14 @@ function Scan({ member }: { member: DashboardCrew }) {
       setProgress(next)
       if (next >= 100) {
         setPhase("done")
-        qc.invalidateQueries({ queryKey: queryKeys.systems(member.id) })
-        qc.invalidateQueries({ queryKey: queryKeys.dashboard })
+        // Persist the scan: its time becomes the "Último escaneo" shown everywhere.
+        saveScan(member.id, {
+          onError: (error) => toast.error(`No se pudo guardar el escaneo. ${errorMessage(error, "")}`.trim()),
+        })
       }
     }, TICK_MS)
     return () => clearTimeout(timer)
-  }, [running, progress, qc, member.id])
+  }, [running, progress, saveScan, member.id])
 
   const caption =
     phase === "done"

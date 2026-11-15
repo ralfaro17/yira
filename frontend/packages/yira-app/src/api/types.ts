@@ -86,7 +86,10 @@ export interface DashboardCrew extends CrewMember {
   open_alerts: Partial<Record<Severity, number>>
   risk: RiskResult
   status: CrewStatus
+  /** When an operator last completed a scan of this crew member in the app (null = never). */
   last_scan_at: string | null
+  /** Timestamp of the newest telemetry the scores are based on. */
+  data_as_of: string | null
   systems: SystemScore[]
   stress_level: StressLevel | null
   current_issue: CurrentIssue | null
@@ -153,4 +156,11 @@ export interface Me {
   emergency_alerts: boolean
   daily_summary_time: string
   units: "metric" | "imperial"
+}
+
+export interface Scan {
+  id: number
+  crew_member: number
+  completed_at: string
+  performed_by: string | null
 }

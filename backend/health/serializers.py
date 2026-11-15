@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Alert, CrewMember, Measurement, Metric, OperatorProfile
+from .models import Alert, CrewMember, Measurement, Metric, OperatorProfile, Scan
 
 MAX_BULK = 10_000
 
@@ -131,3 +131,14 @@ class MeSerializer(serializers.ModelSerializer):
         except (ZoneInfoNotFoundError, ValueError) as exc:
             raise serializers.ValidationError("Unknown time zone.") from exc
         return value
+
+
+class ScanSerializer(serializers.ModelSerializer):
+    performed_by = serializers.CharField(
+        source="performed_by.username", read_only=True, default=None
+    )
+
+    class Meta:
+        model = Scan
+        fields = ["id", "crew_member", "completed_at", "performed_by"]
+        read_only_fields = fields

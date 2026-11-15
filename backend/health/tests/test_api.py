@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from health.models import Alert, CrewMember, Measurement, OperatorProfile
+from health.models import Alert, CrewMember, Measurement, OperatorProfile, Scan
 
 AUTH = "/_allauth/browser/v1/auth"
 
@@ -340,7 +340,9 @@ class DesignSupportApiTests(TestCase):
         )
 
     def test_session_remember(self):
-        r = self.client.post("/api/health/me/session/", {"remember": False}, format="json")
+        r = self.client.post(
+            "/api/health/me/session/", {"remember": False}, format="json"
+        )
         self.assertEqual(r.status_code, 200)
         self.assertTrue(self.client.session.get_expire_at_browser_close())
 
@@ -349,7 +351,9 @@ class AppClientTokenAuthTests(TestCase):
     """allauth headless "app" client, used by the desktop (Electron) app."""
 
     def setUp(self):
-        self.user = User.objects.create_user("astro", "astro@example.com", "Sup3r-secret-pw")
+        self.user = User.objects.create_user(
+            "astro", "astro@example.com", "Sup3r-secret-pw"
+        )
         CrewMember.objects.create(owner=self.user, name="Rosa")
         self.client = APIClient(enforce_csrf_checks=True)
 
@@ -370,7 +374,9 @@ class AppClientTokenAuthTests(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.data["totals"]["crew"], 1)
         # Unsafe methods work without CSRF when authenticated by token.
-        self.assertEqual(api.post("/api/health/alerts/acknowledge-all/").status_code, 200)
+        self.assertEqual(
+            api.post("/api/health/alerts/acknowledge-all/").status_code, 200
+        )
         self.assertEqual(api.get("/_allauth/app/v1/auth/session").status_code, 200)
 
     def test_bad_or_missing_token_rejected(self):
@@ -394,4 +400,41 @@ class AppClientTokenAuthTests(TestCase):
             HTTP_ACCESS_CONTROL_REQUEST_HEADERS="x-session-token",
         )
         self.assertEqual(r.headers.get("Access-Control-Allow-Origin"), "app://yira")
-        self.assertIn("x-session-token", r.headers.get("Access-Control-Allow-Headers", ""))
+        self.assertIn(
+            "x-session-token", r.headers.get("Access-Control-Allow-Headers", "")
+        )
+
+
+class ScanApiTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("ops2", "ops2@example.com", "pw-12345678")
+        self.client = APIClient()
+        self.client.force_login(self.user)
+        self.crew = CrewMember.objects.create(owner=self.user, name="Álvaro")
+
+    def test_record_scan_updates_last_scan_at(self):
+        r = self.client.get("/api/health/dashboard/")
+        self.assertIsNone(r.data["crew"][0]["last_scan_at"])  # never scanned
+
+        r = self.client.post(f"/api/health/crew/{self.crew.id}/scans/")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(r.data["performed_by"], "ops2")
+        completed_at = r.data["completed_at"]
+
+        dash = self.client.get("/api/health/dashboard/").data["crew"][0]
+        self.assertEqual(dash["last_scan_at"], Scan.objects.get().completed_at)
+        self.assertIn("data_as_of", dash)
+
+        second = self.client.post(f"/api/health/crew/{self.crew.id}/scans/").data
+        history = self.client.get(f"/api/health/crew/{self.crew.id}/scans/").data
+        self.assertEqual(history["count"], 2)
+        self.assertEqual(history["results"][0]["id"], second["id"])  # newest first
+        self.assertGreaterEqual(second["completed_at"], completed_at)
+
+    def test_scans_are_owner_scoped(self):
+        other = APIClient()
+        other.force_login(User.objects.create_user("x", "x@example.com", "pw-12345678"))
+        self.assertEqual(
+            other.post(f"/api/health/crew/{self.crew.id}/scans/").status_code, 404
+        )
+        self.assertFalse(Scan.objects.exists())

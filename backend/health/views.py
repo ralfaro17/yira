@@ -20,7 +20,7 @@ from rest_framework.views import APIView
 from . import services
 from .analysis import anomaly, derived, frames, reference, summary, trends
 from .analysis.thresholds import evaluate
-from .models import Alert, CrewMember, Measurement, Metric, OperatorProfile
+from .models import Alert, CrewMember, Measurement, Metric, OperatorProfile, Scan
 from .serializers import (
     AlertSerializer,
     CrewMemberSerializer,
@@ -28,6 +28,7 @@ from .serializers import (
     MeasurementBulkSerializer,
     MeasurementSerializer,
     MeSerializer,
+    ScanSerializer,
 )
 
 MAX_CSV_BYTES = 5 * 1024 * 1024
@@ -356,6 +357,22 @@ class CrewMemberViewSet(viewsets.ModelViewSet):
             raise ValidationError({"days": "Must be an integer."}) from exc
         return Response({"crew_member": crew.id, **services.crew_systems(crew, days)})
 
+    @action(detail=True, methods=["get", "post"])
+    def scans(self, request: Request, pk=None) -> Response:
+        """GET: scan history (newest first). POST: record a completed scan now."""
+        crew = self.get_object()
+        if request.method == "POST":
+            scan = Scan.objects.create(
+                crew_member=crew,
+                performed_by_id=request.user.pk,
+                completed_at=timezone.now(),
+            )
+            return Response(ScanSerializer(scan).data, status=status.HTTP_201_CREATED)
+        page = self.paginate_queryset(
+            Scan.objects.filter(crew_member=crew).select_related("performed_by")
+        )
+        return self.get_paginated_response(ScanSerializer(page, many=True).data)
+
     @action(detail=True, methods=["get"])
     def risk(self, request: Request, pk=None) -> Response:
         crew = self.get_object()
@@ -421,7 +438,8 @@ class DashboardView(APIView):
                     "open_alerts": services.open_alert_counts(crew),
                     "risk": risk,
                     "status": sys_result["status"],
-                    "last_scan_at": sys_result["as_of"],
+                    "last_scan_at": services.last_scan_at(crew),
+                    "data_as_of": sys_result["as_of"],
                     "systems": [
                         {k: s[k] for k in ("key", "score", "status", "estimated")}
                         for s in sys_result["systems"]

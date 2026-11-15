@@ -5,7 +5,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from health import services
-from health.models import Alert, CrewMember
+from health.models import Alert, CrewMember, Scan
 
 
 class SimulatorTests(TestCase):
@@ -49,3 +49,11 @@ class SimulatorTests(TestCase):
         for a in Alert.objects.all():
             self.assertGreaterEqual(a.occurrences, 1)
             self.assertGreaterEqual(a.last_seen_at, a.triggered_at)
+
+    def test_seeds_last_scan(self):
+        from django.utils import timezone
+
+        for name, minutes in (("Álvaro", 180), ("Rosa", 5), ("Mateo", 5)):
+            scan = Scan.objects.get(crew_member=self.crew[name])
+            age = (timezone.now() - scan.completed_at).total_seconds() / 60
+            self.assertAlmostEqual(age, minutes, delta=2)

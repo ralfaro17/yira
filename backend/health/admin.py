@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Alert, CrewMember, Measurement
+from .models import Alert, CrewMember, Measurement, Scan
 
 
 @admin.register(CrewMember)
@@ -31,3 +31,11 @@ class AlertAdmin(admin.ModelAdmin):
     ]
     list_filter = ["severity", "kind", "metric", "acknowledged"]
     raw_id_fields = ["crew_member", "measurement", "acknowledged_by"]
+
+
+@admin.register(Scan)
+class ScanAdmin(admin.ModelAdmin):
+    list_display = ["crew_member", "completed_at", "performed_by"]
+    list_filter = ["crew_member"]
+    date_hierarchy = "completed_at"
+    raw_id_fields = ["crew_member", "performed_by"]

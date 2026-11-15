@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from health import services
 from health.analysis.frames import parse_duration
-from health.models import Alert, CrewMember, Measurement
+from health.models import Alert, CrewMember, Measurement, Scan
 from health.simulation import DEFAULT_CREW, SCENARIOS, generate_crew_frame
 
 
@@ -108,6 +108,11 @@ class Command(BaseCommand):
                     crew, batch.to_dict("records"), Measurement.Source.SIMULATED
                 )
                 n_alerts += len(result["alerts"])
+            Scan.objects.create(
+                crew_member=crew,
+                performed_by=user,
+                completed_at=timezone.now() - timedelta(minutes=profile.scanned_minutes_ago),
+            )
             status = services.crew_systems(crew)
             scores = ", ".join(
                 f"{sys['key']}={sys['score']}" for sys in status["systems"]

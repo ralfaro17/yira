@@ -29,7 +29,7 @@ from .analysis import (
     trends,
 )
 from .analysis import baseline as baseline_mod
-from .models import Alert, CrewMember, Measurement, Metric
+from .models import Alert, CrewMember, Measurement, Metric, Scan
 
 BASELINE_DAYS = 3
 TREND_WINDOW = timedelta(days=14)
@@ -96,6 +96,13 @@ def latest_values(crew_member: CrewMember) -> dict[str, dict]:
         r["metric"]: {"value": r["value"], "recorded_at": r["recorded_at"]}
         for r in rows
     }
+
+
+def last_scan_at(crew_member: CrewMember) -> datetime | None:
+    """When this crew member was last scanned from the app (``None`` if never)."""
+    return Scan.objects.filter(crew_member=crew_member).aggregate(
+        t=Max("completed_at")
+    )["t"]
 
 
 def open_alert_counts(

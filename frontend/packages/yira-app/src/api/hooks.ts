@@ -3,7 +3,7 @@ import axios from "axios"
 
 import { api, clearSessionToken, ensureCsrf, getSessionToken, setSessionToken } from "./client"
 import { authBase, getApiConfig } from "./config"
-import type { Alert, Dashboard, Me, Paginated, SessionResponse, SessionUser, SystemsResponse } from "./types"
+import type { Alert, Dashboard, Me, Paginated, Scan, SessionResponse, SessionUser, SystemsResponse } from "./types"
 
 export const queryKeys = {
   session: ["session"] as const,
@@ -193,5 +193,27 @@ export function useUpdateMe() {
       return (await api.patch<Me>("/api/health/me/", patch)).data
     },
     onSuccess: (me) => qc.setQueryData(queryKeys.me, me),
+  })
+}
+
+/** Save a completed scan; its time becomes the crew member's "Último escaneo". */
+export function useRecordScan() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (crewId: number) => {
+      await ensureCsrf()
+      return (await api.post<Scan>(`/api/health/crew/${crewId}/scans/`)).data
+    },
+    onSuccess: (scan) => {
+      // Show the new date right away, then refetch the derived data.
+      qc.setQueryData<Dashboard>(queryKeys.dashboard, (old) =>
+        old && {
+          ...old,
+          crew: old.crew.map((c) => (c.id === scan.crew_member ? { ...c, last_scan_at: scan.completed_at } : c)),
+        },
+      )
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard })
+      qc.invalidateQueries({ queryKey: queryKeys.systems(scan.crew_member) })
+    },
   })
 }

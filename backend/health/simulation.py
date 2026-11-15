@@ -46,6 +46,7 @@ class CrewProfile:
     sleep_h: float
     scenarios: tuple[str, ...] = ()
     photo: str = ""
+    scanned_minutes_ago: int = 5  # seeds the "Último escaneo" shown in the app
 
     def date_of_birth(self, today: date | None = None) -> date:
         today = today or date.today()
@@ -67,6 +68,7 @@ DEFAULT_CREW = [
         36.6,
         7.6,
         photo="/crew/alvaro.png",
+        scanned_minutes_ago=180,
     ),
     CrewProfile(
         "rosa",
