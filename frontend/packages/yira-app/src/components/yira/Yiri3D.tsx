@@ -6,6 +6,16 @@ import { clone } from "three/addons/utils/SkeletonUtils.js"
 import type { CrewStatus } from "@/api/types"
 import { cn } from "@/lib/utils"
 
+import {
+  EXPRESSIONS,
+  applyExpression,
+  createFaceRig,
+  stepExpression,
+  wavingArmPose,
+  type Expression,
+  type FaceRig,
+} from "./yiri/expressions"
+
 export type YiriAnimationMode = "idle" | "wave" | "spin"
 
 export interface Yiri3DProps extends HTMLAttributes<HTMLDivElement> {
@@ -60,6 +70,19 @@ function getYiriGLTF(): Promise<GLTF> {
   return cachedGLTFPromise
 }
 
+let webglSupport: boolean | undefined
+
+function supportsWebGL(): boolean {
+  if (webglSupport !== undefined) return webglSupport
+  try {
+    const probe = document.createElement("canvas")
+    webglSupport = !!(probe.getContext("webgl2") || probe.getContext("webgl"))
+  } catch {
+    webglSupport = false
+  }
+  return webglSupport
+}
+
 // Status accent colors for Yiri's headphones, hair tuft, headband and eyebrows
 const ACCENT_COLORS: Record<CrewStatus, { main: number; dark: number }> = {
   stable: { main: 0x1948ad, dark: 0x0a3c90 },
@@ -76,6 +99,7 @@ const ACCENT_COLORS: Record<CrewStatus, { main: number; dark: number }> = {
  * - "spin": Fast horizontal 360° spin (triggered when executing scans)
  * - "idle": Organic floating, breathing scale, curiosity head tilts, and pointer tracking
  * - Status-based accent lighting and material tinting (stable/blue, observation/amber, critical/red)
+ * - Status-based facial expression: smile ":)" (stable), serious ":|" (observation), sad ":(" (critical)
  */
 export function Yiri3D({
   mode = "idle",
@@ -93,20 +117,22 @@ export function Yiri3D({
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [hasError, setHasError] = useState(false)
+  const [webglOk] = useState(supportsWebGL)
+  const [loadFailed, setLoadFailed] = useState(false)
+  const hasError = !webglOk || loadFailed
 
   // Current animation mode: isScanning prop overrides mode to "spin"
   const activeMode: YiriAnimationMode = isScanning ? "spin" : mode
 
-  // Mutable refs for animation loop
+  // Mutable refs read by the animation loop (synced after render, never during it)
   const modeRef = useRef(activeMode)
-  modeRef.current = activeMode
-
   const statusRef = useRef(status)
-  statusRef.current = status
-
   const interactiveRef = useRef(interactive)
-  interactiveRef.current = interactive
+  useEffect(() => {
+    modeRef.current = activeMode
+    statusRef.current = status
+    interactiveRef.current = interactive
+  }, [activeMode, status, interactive])
 
   // Pointer position normalized to [-1, 1]
   const pointerTarget = useRef({ x: 0, y: 0 })
@@ -120,18 +146,6 @@ export function Yiri3D({
     let isDisposed = false
     let animationFrameId = 0
     let isVisible = true
-
-    // Check WebGL availability
-    try {
-      const gl = canvas.getContext("webgl2") || canvas.getContext("webgl")
-      if (!gl) {
-        setHasError(true)
-        return
-      }
-    } catch {
-      setHasError(true)
-      return
-    }
 
     // 1. Scene setup
     const scene = new THREE.Scene()
@@ -180,6 +194,13 @@ export function Yiri3D({
     // Materials to tint with status color
     const accentMaterials: { mat: THREE.MeshStandardMaterial; isDark: boolean }[] = []
 
+    // Facial expression (mouth + eyebrows), eased toward the current status
+    let faceRig: FaceRig | null = null
+    const expression: Expression = { ...EXPRESSIONS[statusRef.current] }
+
+    // 0 = arm in the current mode's pose, 1 = fully raised waving pose (eased, so it never snaps)
+    let waveBlend = modeRef.current === "wave" ? 1 : 0
+
     getYiriGLTF()
       .then((gltf) => {
         if (isDisposed) return
@@ -226,15 +247,18 @@ export function Yiri3D({
           }
         })
 
-        // Apply initial status colors
+        // Apply initial status colors and facial expression
         updateStatusColors(statusRef.current)
+        faceRig = createFaceRig(mascotRoot)
+        Object.assign(expression, EXPRESSIONS[statusRef.current])
+        applyExpression(faceRig, expression)
 
         scene.add(mascotRoot)
         setIsLoaded(true)
       })
       .catch((err) => {
         console.warn("[Yiri3D] Failed to load 3D GLB model, falling back to 2D image:", err)
-        setHasError(true)
+        setLoadFailed(true)
       })
 
     function updateStatusColors(currentStatus: CrewStatus) {
@@ -300,6 +324,12 @@ export function Yiri3D({
         updateStatusColors(prevStatus)
       }
 
+      // Ease the face toward the status expression (smile / serious / sad)
+      if (faceRig && stepExpression(expression, EXPRESSIONS[statusRef.current], delta)) {
+        applyExpression(faceRig, expression)
+      }
+      waveBlend += ((currentMode === "wave" ? 1 : 0) - waveBlend) * Math.min(1, delta * 5)
+
       // Smooth pointer lerping
       pointerCurrent.current.x = THREE.MathUtils.lerp(pointerCurrent.current.x, pointerTarget.current.x, 0.08)
       pointerCurrent.current.y = THREE.MathUtils.lerp(pointerCurrent.current.y, pointerTarget.current.y, 0.08)
@@ -341,17 +371,17 @@ export function Yiri3D({
       if (cabezaPivot) {
         if (currentMode === "spin") {
           cabezaPivot.rotation.z = Math.sin(t * 3.6) * 0.03
-          cabezaPivot.rotation.x = 0
+          cabezaPivot.rotation.x = expression.headDroop
           cabezaPivot.rotation.y = 0
         } else if (currentMode === "wave") {
           // Friendly head tilt towards the waving arm with curious eye tracking
           cabezaPivot.rotation.z = -0.06 + Math.sin(t * 2.8) * 0.035
-          cabezaPivot.rotation.x = Math.sin(t * 2.0) * 0.02 - py * 0.08
+          cabezaPivot.rotation.x = Math.sin(t * 2.0) * 0.02 - py * 0.08 + expression.headDroop
           cabezaPivot.rotation.y = px * 0.2
         } else {
           // Idle head looking around + cursor following
           cabezaPivot.rotation.z = Math.sin(t * 1.4) * 0.035 + px * 0.06
-          cabezaPivot.rotation.x = Math.sin(t * 1.7) * 0.025 - py * 0.08
+          cabezaPivot.rotation.x = Math.sin(t * 1.7) * 0.025 - py * 0.08 + expression.headDroop
           cabezaPivot.rotation.y = px * 0.22
         }
       }
@@ -371,30 +401,32 @@ export function Yiri3D({
       }
 
       if (armDerPivot && armIzqPivot) {
-        if (currentMode === "wave") {
-          // Waving right arm: raised up and oscillating briskly
-          const wave = Math.sin(t * 5.8)
-          armDerPivot.rotation.z = -0.55 + wave * 0.22
-          armDerPivot.rotation.x = -0.18 + Math.cos(t * 5.8) * 0.09
-          armDerPivot.rotation.y = 0.12 + wave * 0.07
-
-          // Left arm resting comfortably at the side
-          armIzqPivot.rotation.z = 0.06 + Math.sin(t * 2.2) * 0.025
-          armIzqPivot.rotation.x = 0
-          armIzqPivot.rotation.y = 0
-        } else if (currentMode === "spin") {
+        // Pose of the current non-waving mode
+        let rz: number, rx: number, ry: number
+        if (currentMode === "spin") {
           // Arms floating dynamically during rotation
-          armDerPivot.rotation.z = -0.14 - Math.sin(t * 3.6) * 0.05
+          rz = -0.14 - Math.sin(t * 3.6) * 0.05
+          rx = 0.08
+          ry = 0
           armIzqPivot.rotation.z = 0.14 + Math.sin(t * 3.6) * 0.05
-          armDerPivot.rotation.x = 0.08
           armIzqPivot.rotation.x = 0.08
+          armIzqPivot.rotation.y = 0
         } else {
-          // Idle gentle swaying
-          armDerPivot.rotation.z = Math.sin(t * 2.0) * 0.04
-          armIzqPivot.rotation.z = -Math.sin(t * 2.0) * 0.04
-          armDerPivot.rotation.x = Math.cos(t * 1.8) * 0.02
+          // Idle gentle swaying (also the left arm's pose while waving)
+          rz = Math.sin(t * 2.0) * 0.04
+          rx = Math.cos(t * 1.8) * 0.02
+          ry = 0
+          armIzqPivot.rotation.z = currentMode === "wave" ? 0.06 + Math.sin(t * 2.2) * 0.025 : -Math.sin(t * 2.0) * 0.04
           armIzqPivot.rotation.x = Math.cos(t * 1.8) * 0.02
+          armIzqPivot.rotation.y = 0
         }
+
+        // Waving: right arm held up above the shoulder and swinging side to side the whole time.
+        // Blended in/out so it rises smoothly, and never drops back to rest while in "wave" mode.
+        const wave = wavingArmPose(t)
+        armDerPivot.rotation.z = THREE.MathUtils.lerp(rz, wave.z, waveBlend)
+        armDerPivot.rotation.x = THREE.MathUtils.lerp(rx, wave.x, waveBlend)
+        armDerPivot.rotation.y = THREE.MathUtils.lerp(ry, wave.y, waveBlend)
       }
 
       renderer.render(scene, camera)
@@ -410,6 +442,7 @@ export function Yiri3D({
       container.removeEventListener("pointerleave", onPointerLeave)
       resizeObserver.disconnect()
       intersectionObserver.disconnect()
+      faceRig?.dispose()
       renderer.dispose()
     }
   }, [cameraDistance, modelScale])
