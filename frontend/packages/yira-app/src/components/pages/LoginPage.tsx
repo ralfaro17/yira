@@ -18,6 +18,10 @@ import { LoginInputBox, loginInputClass } from "@/components/yira/login/LoginInp
 import { LoginMascotScene } from "@/components/yira/login/LoginMascotScene"
 import { cn } from "@/lib/utils"
 
+// Demo account seeded by `manage.py simulate_mission` (backend/health/management/commands/simulate_mission.py).
+const DEMO_EMAIL = "demo@example.com"
+const DEMO_PASSWORD = "demo-password-123"
+
 /** Figma 49:68 "Inicio de sesión personaje animado saludando". */
 export function LoginPage() {
   const session = useSession()
@@ -25,8 +29,8 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [identifier, setIdentifier] = useState("")
-  const [password, setPassword] = useState("")
+  const [identifier, setIdentifier] = useState(DEMO_EMAIL)
+  const [password, setPassword] = useState(DEMO_PASSWORD)
   const [remember, setRemember] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [forgotOpen, setForgotOpen] = useState(false)
