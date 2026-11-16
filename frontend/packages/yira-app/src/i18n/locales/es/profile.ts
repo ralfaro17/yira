@@ -1,0 +1,42 @@
+const profile = {
+  title: "Perfil",
+  photoAlt: "Foto de {{name}}",
+  /** Seeded default of `role_label`; shown translated when unchanged. */
+  defaultRole: "Centro de control · Tierra",
+  activeSession: "Sesión activa",
+  edit: "Editar perfil",
+  preferences: "Preferencias",
+  language: "Idioma",
+  timezone: "Zona horaria",
+  timezones: {
+    earth: "Tierra · UTC−6",
+    utc: "UTC",
+    houston: "Houston · UTC−6/−5",
+    madrid: "Madrid · UTC+1/+2",
+  },
+  emergencyAlerts: "Alertas de emergencia",
+  enabled: "Activadas",
+  disabled: "Desactivadas",
+  dailySummary: "Resumen diario",
+  units: "Unidades",
+  unitOptions: { metric: "Métrico", imperial: "Imperial" },
+  save: "Guardar cambios",
+  saving: "Guardando…",
+  saved: "Preferencias guardadas",
+  saveError: "No se pudieron guardar los cambios.",
+  signOut: "Cerrar sesión",
+  signOutError: "No se pudo cerrar la sesión.",
+  editDialog: {
+    title: "Editar perfil",
+    description: "Así te verá el resto del centro de control.",
+    displayName: "Nombre visible",
+    role: "Rol",
+    cancel: "Cancelar",
+    save: "Guardar",
+    saving: "Guardando…",
+    updated: "Perfil actualizado",
+    error: "No se pudo actualizar el perfil.",
+  },
+}
+
+export default profile

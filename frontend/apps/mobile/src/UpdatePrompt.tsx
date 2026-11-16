@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import i18n from "@/i18n"
 import { toast } from "@/lib/toast"
 import { useRegisterSW } from "virtual:pwa-register/react"
 
@@ -17,15 +18,15 @@ export function UpdatePrompt() {
 
   useEffect(() => {
     if (!needRefresh) return
-    toast("Nueva versión disponible", {
+    toast(i18n.t("layout.pwa.updateAvailable"), {
       id: "pwa-update",
       duration: Infinity,
-      action: { label: "Actualizar", onClick: () => updateServiceWorker(true) },
+      action: { label: i18n.t("layout.pwa.update"), onClick: () => updateServiceWorker(true) },
     })
   }, [needRefresh, updateServiceWorker])
 
   useEffect(() => {
-    if (offlineReady) toast.success("YIRA está lista para usarse sin conexión", { id: "pwa-offline" })
+    if (offlineReady) toast.success(i18n.t("layout.pwa.offlineReady"), { id: "pwa-offline" })
   }, [offlineReady])
 
   return null

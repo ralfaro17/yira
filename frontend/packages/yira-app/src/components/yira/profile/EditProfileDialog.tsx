@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { useUpdateMe } from "@/api/hooks"
@@ -10,6 +11,7 @@ import { Label } from "@/components/ui/label"
 
 /** "Editar perfil": display name + role label. Mount it only while open so it starts from `me`. */
 export function EditProfileDialog({ me, open, onOpenChange }: { me: Me; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { t } = useTranslation()
   const update = useUpdateMe()
   const [displayName, setDisplayName] = useState(me.display_name)
   const [roleLabel, setRoleLabel] = useState(me.role_label)
@@ -20,10 +22,10 @@ export function EditProfileDialog({ me, open, onOpenChange }: { me: Me; open: bo
       { display_name: displayName.trim(), role_label: roleLabel.trim() },
       {
         onSuccess: () => {
-          toast.success("Perfil actualizado")
+          toast.success(t("profile.editDialog.updated"))
           onOpenChange(false)
         },
-        onError: () => toast.error("No se pudo actualizar el perfil."),
+        onError: () => toast.error(t("profile.editDialog.error")),
       },
     )
   }
@@ -33,11 +35,11 @@ export function EditProfileDialog({ me, open, onOpenChange }: { me: Me; open: bo
       <DialogContent className="sm:max-w-md">
         <form onSubmit={submit} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>Editar perfil</DialogTitle>
-            <DialogDescription>Así te verá el resto del centro de control.</DialogDescription>
+            <DialogTitle>{t("profile.editDialog.title")}</DialogTitle>
+            <DialogDescription>{t("profile.editDialog.description")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
-            <Label htmlFor="profile-display-name">Nombre visible</Label>
+            <Label htmlFor="profile-display-name">{t("profile.editDialog.displayName")}</Label>
             <Input
               id="profile-display-name"
               value={displayName}
@@ -47,15 +49,15 @@ export function EditProfileDialog({ me, open, onOpenChange }: { me: Me; open: bo
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="profile-role">Rol</Label>
+            <Label htmlFor="profile-role">{t("profile.editDialog.role")}</Label>
             <Input id="profile-role" value={roleLabel} maxLength={120} onChange={(e) => setRoleLabel(e.target.value)} />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              {t("profile.editDialog.cancel")}
             </Button>
             <Button type="submit" disabled={update.isPending}>
-              {update.isPending ? "Guardando…" : "Guardar"}
+              {update.isPending ? t("profile.editDialog.saving") : t("profile.editDialog.save")}
             </Button>
           </DialogFooter>
         </form>

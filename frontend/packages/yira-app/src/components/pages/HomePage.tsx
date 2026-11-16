@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Link, useNavigate } from "react-router"
 
 import { useDashboard } from "@/api/hooks"
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils"
 
 /** Figma 49:2 "bienvenida 2 tripulación" (rendered inside AppLayout). */
 export function HomePage() {
+  const { t } = useTranslation()
   const { name, isPending: namePending } = useGreetingName()
   const dashboard = useDashboard()
   const navigate = useNavigate()
@@ -49,21 +51,21 @@ export function HomePage() {
       <section className="flex flex-col items-start gap-5">
         <span className="flex items-center gap-2 rounded-pill bg-brand/35 px-[14px] py-[5px] text-[15px] font-medium text-white">
           <span aria-hidden className="motion-safe-only size-2 animate-pulse rounded-full bg-stable" />
-          Misión a Marte · Monitoreo en vivo
+          {t("home.badge")}
         </span>
 
         <h1 className="text-4xl font-extrabold leading-tight text-white md:text-[52px] md:leading-[1.15]">
-          ¡Bienvenida a YIRA,{" "}
+          {t("home.welcomeBefore")}{" "}
           {namePending ? (
             <Skeleton className="inline-block h-[0.9em] w-[5ch] bg-white/20 align-baseline" />
           ) : (
             name.toUpperCase()
           )}
-          !
+          {t("home.welcomeAfter")}
         </h1>
 
         <p className="max-w-[460px] text-base text-white/80 md:text-xl">
-          Sigue en tiempo real la salud de tu tripulación y actúa a tiempo ante cualquier señal de alerta.
+          {t("home.intro")}
         </p>
 
         <Link
@@ -77,7 +79,7 @@ export function HomePage() {
             "h-auto rounded-pill bg-brand px-7 py-3.5 text-lg font-medium text-white shadow-[0px_8px_24px_0px_rgba(0,99,247,0.6)] hover:bg-brand/90 md:text-xl",
           )}
         >
-          Conoce tus estados
+          {t("home.cta")}
           <img src="/yira/login/icon-arrow-right.svg" alt="" width={24} height={24} className="size-6" />
         </Link>
 
@@ -88,13 +90,13 @@ export function HomePage() {
             <StatsBar
               loading={loading}
               stats={[
-                { label: "Tripulantes", value: totals?.crew ?? 0 },
+                { label: t("home.stats.crew"), value: totals?.crew ?? 0 },
                 {
-                  label: "En observación",
+                  label: t("home.stats.observation"),
                   value: totals?.observation ?? 0,
-                  hint: totals?.critical ? `${totals.critical} en estado crítico` : undefined,
+                  hint: totals?.critical ? t("home.stats.critical", { count: totals.critical }) : undefined,
                 },
-                { label: "Ritmo promedio", value: avgHr },
+                { label: t("home.stats.avgHeartRate"), value: avgHr },
               ]}
             />
           )}
@@ -103,7 +105,7 @@ export function HomePage() {
 
       {/* Mars + mascot on its platform + floating chips */}
       <section
-        aria-label="Resumen en vivo"
+        aria-label={t("home.liveSummary")}
         className={cn(
           "relative mx-auto aspect-square w-full max-w-[460px] transition-all duration-700 ease-out",
           !isMounted && "scale-95 opacity-0",
@@ -139,24 +141,24 @@ export function HomePage() {
             interactive
             className="h-full w-full"
             fallbackSrc="/yira/login/mascot-waving.png"
-            alt="Yiri, la mascota de YIRA"
+            alt={t("home.mascotAlt")}
           />
         </div>
 
         <GlassChip
-          label="Ritmo cardíaco"
+          label={t("home.chips.heartRate")}
           value={avgHr}
           loading={loading}
           className="absolute left-0 top-[12%] md:-left-6"
         />
         <GlassChip
-          label="Sistema inmune"
+          label={t("home.chips.immune")}
           value={<span className={STATUS[immune].text}>{STATUS[immune].label}</span>}
           loading={loading}
           className="absolute right-0 top-[32%] md:-right-4"
         />
         <GlassChip
-          label="Último escaneo"
+          label={t("home.chips.lastScan")}
           value={timeAgo(lastScan)}
           loading={loading}
           className="absolute bottom-[22%] left-0 md:-left-2"

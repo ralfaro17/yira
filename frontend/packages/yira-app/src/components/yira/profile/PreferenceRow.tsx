@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { CONTROL } from "./styles"
 
-/** "Idioma ......... [Español ▾]" row of the Preferencias card. */
+/** "Zona horaria ......... [Tierra · UTC−6 ▾]" row of the Preferencias card. */
 export function PreferenceRow({ id, label, children }: { id: string; label: string; children: ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-white/15 py-4 last:border-b-0">

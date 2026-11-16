@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
 import { GlassPanel } from "@/components/yira/GlassPanel"
@@ -8,9 +9,10 @@ import { cn } from "@/lib/utils"
 
 /** Figma 25:2 "Protocolos". */
 export function ProtocolsPage() {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-8 md:gap-[38px]">
-      <PageHeading title="Protocolos" subtitle="Guías de acción para emergencias y cuidado de la tripulación" />
+      <PageHeading title={t("protocols.page.title")} subtitle={t("protocols.page.subtitle")} />
       <ul className="grid gap-6 md:grid-cols-3">
         {PROTOCOLS.map((protocol) => (
           <li key={protocol.slug}>
@@ -23,6 +25,7 @@ export function ProtocolsPage() {
 }
 
 function ProtocolCard({ protocol }: { protocol: Protocol }) {
+  const { t } = useTranslation()
   const theme = PROTOCOL_THEME[protocol.category]
   return (
     <GlassPanel className="h-full gap-3.5 p-7 md:min-h-[400px]">
@@ -40,7 +43,7 @@ function ProtocolCard({ protocol }: { protocol: Protocol }) {
           theme.buttonText,
         )}
       >
-        Ver protocolo
+        {t("protocols.page.view")}
         <img src={theme.arrow} alt="" width={24} height={24} className="size-6" />
       </Link>
     </GlassPanel>

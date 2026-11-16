@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
 import { useDashboard } from "@/api/hooks"
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils"
 
 /** Figma 25:50 "Evaluación": one card per crew member with the four system scores. */
 export function EvaluationPage() {
+  const { t } = useTranslation()
   const { data, isPending, isError, refetch } = useDashboard()
   const crew = data?.crew ?? []
   const newestScan = crew
@@ -26,8 +28,8 @@ export function EvaluationPage() {
   return (
     <div className="flex flex-col gap-8 md:gap-7">
       <PageHeading
-        title="Evaluación"
-        subtitle={`Estado de salud por sistema · Último escaneo ${newestScan ? timeAgo(newestScan) : "sin datos"}`}
+        title={t("evaluation.title")}
+        subtitle={t("evaluation.subtitle", { when: timeAgo(newestScan) })}
       />
       {isPending ? (
         <LoadingPanels />
@@ -49,6 +51,7 @@ export function EvaluationPage() {
 }
 
 function EvaluationCard({ member }: { member: DashboardCrew }) {
+  const { t } = useTranslation()
   const title = crewTitle(member)
   return (
     <GlassPanel className="h-full gap-3.5 p-6 md:min-h-[446px]">
@@ -64,7 +67,7 @@ function EvaluationCard({ member }: { member: DashboardCrew }) {
           <StatusBadge status={member.status} />
         </div>
       </div>
-      <p className="text-sm text-white/80">Último escaneo: {lastScanText(member.last_scan_at)}</p>
+      <p className="text-sm text-white/80">{t("evaluation.lastScan", { when: lastScanText(member.last_scan_at) })}</p>
       <div className="flex flex-col gap-3">
         {orderedSystems(member.systems).map((system) => (
           <SystemBar
@@ -84,9 +87,9 @@ function EvaluationCard({ member }: { member: DashboardCrew }) {
           "flex items-center justify-center gap-2.5 self-start rounded-pill bg-white px-6 py-3 text-xl font-medium transition-opacity hover:opacity-90 focus-visible:ring-3 focus-visible:ring-white/50 focus-visible:outline-none",
           STATUS[member.status].text,
         )}
-        aria-label={`Ver detalles de ${member.name}`}
+        aria-label={t("evaluation.viewDetailsOf", { name: member.name })}
       >
-        Ver detalles
+        {t("evaluation.viewDetails")}
         <StatusArrow status={member.status} />
       </Link>
     </GlassPanel>

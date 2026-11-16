@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { Yiri3D } from "@/components/yira/Yiri3D"
 import { cn } from "@/lib/utils"
 
@@ -10,12 +12,13 @@ const SPARKLES = [
 ]
 
 function SpeechBubble({ className = "" }: { className?: string }) {
+  const { t } = useTranslation()
   return (
     <div
       className={`flex w-[200px] flex-col gap-[2px] rounded-[24px] border border-glass-border bg-glass px-[22px] py-[14px] whitespace-nowrap backdrop-blur-[20px] ${className}`}
     >
-      <p className="text-[22px] font-bold text-white">¡Hola!</p>
-      <p className="text-[15px] text-white/80">Tu tripulación te espera</p>
+      <p className="text-[22px] font-bold text-white">{t("login.bubble.hello")}</p>
+      <p className="text-[15px] text-white/80">{t("login.bubble.waiting")}</p>
     </div>
   )
 }
@@ -32,6 +35,7 @@ export function LoginMascotScene({
   isMounted?: boolean
   isExiting?: boolean
 }) {
+  const { t } = useTranslation()
   return (
     <>
       {/* Desktop composition */}
@@ -99,7 +103,7 @@ export function LoginMascotScene({
             mode="wave"
             className="h-[710px] w-[645px]"
             fallbackSrc="/yira/login/mascot-waving.png"
-            alt="Yiri, la mascota de YIRA, saludando"
+            alt={t("login.mascotAlt")}
           />
         </div>
       </div>
@@ -143,7 +147,7 @@ export function LoginMascotScene({
             isExiting && "translate-y-8 opacity-0 duration-400 ease-in",
           )}
           fallbackSrc="/yira/login/mascot-waving.png"
-          alt="Yiri, la mascota de YIRA, saludando"
+          alt={t("login.mascotAlt")}
         />
         <SpeechBubble
           className={cn(

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import type { DashboardCrew } from "@/api/types"
 import { Carousel, CarouselContent, CarouselItem, useCarousel, type CarouselApi } from "@/components/ui/carousel"
@@ -11,6 +12,7 @@ const STEP = 93
 
 /** Round white arrow button (Figma "Group 10"/"Group 11"; the previous one is the same asset rotated). */
 function DeckArrow({ direction }: { direction: "prev" | "next" }) {
+  const { t } = useTranslation()
   const { scrollPrev, scrollNext, canScrollPrev, canScrollNext } = useCarousel()
   const prev = direction === "prev"
   return (
@@ -18,7 +20,7 @@ function DeckArrow({ direction }: { direction: "prev" | "next" }) {
       type="button"
       onClick={prev ? scrollPrev : scrollNext}
       disabled={prev ? !canScrollPrev : !canScrollNext}
-      aria-label={prev ? "Tripulante anterior" : "Tripulante siguiente"}
+      aria-label={prev ? t("crew.deck.previous") : t("crew.deck.next")}
       className={cn(
         "absolute top-[222px] z-40 rounded-pill transition-[opacity,transform] hover:scale-105 focus-visible:ring-3 focus-visible:ring-white/60 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40",
         prev ? "left-0" : "right-0",
@@ -43,6 +45,7 @@ export function CrewDeck({
   onFocusChange?: (index: number) => void
   className?: string
 }) {
+  const { t } = useTranslation()
   const [api, setApi] = useState<CarouselApi>()
   const [focused, setFocused] = useState(0)
 
@@ -66,7 +69,7 @@ export function CrewDeck({
     <Carousel
       setApi={setApi}
       opts={{ align: "center", containScroll: false }}
-      aria-label="Tripulación"
+      aria-label={t("crew.title")}
       className={cn("w-full max-w-[535px] sm:px-[32px]", className)}
     >
       <CarouselContent className="ml-0 h-[518px]">
@@ -76,7 +79,7 @@ export function CrewDeck({
           return (
             <CarouselItem
               key={member.id}
-              aria-label={`${index + 1} de ${crew.length}: ${member.name}`}
+              aria-label={t("crew.deck.position", { index: index + 1, total: crew.length, name: member.name })}
               aria-current={isFocused ? "true" : undefined}
               className={cn("relative pl-0 transition-opacity duration-300", distance > 1 && "pointer-events-none opacity-0")}
               style={{ flexBasis: STEP, zIndex: 30 - distance }}
@@ -87,7 +90,7 @@ export function CrewDeck({
                   <button
                     type="button"
                     onClick={() => api?.scrollTo(index)}
-                    aria-label={`Ver a ${member.name}`}
+                    aria-label={t("crew.deck.show", { name: member.name })}
                     className="absolute inset-0 rounded-panel focus-visible:ring-3 focus-visible:ring-white/60 focus-visible:outline-none"
                   />
                 )}

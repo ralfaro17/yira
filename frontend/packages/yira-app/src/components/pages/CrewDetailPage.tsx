@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { Link, Navigate, useParams } from "react-router"
 
 import { useCrewMember, useSystems } from "@/api/hooks"
@@ -9,6 +10,7 @@ import { GlassPanel } from "@/components/yira/GlassPanel"
 import { ErrorState } from "@/components/yira/QueryState"
 import { EarthSummaryDialog } from "@/components/yira/crew/EarthSummaryDialog"
 import { MoodRow } from "@/components/yira/crew/MoodRow"
+import { driverText } from "@/components/yira/crew/crewCopy"
 import { buildEarthSummary } from "@/components/yira/crew/earthSummary"
 import { YIRI_ALT, YIRI_SRC } from "@/components/yira/crew/mascot"
 import { SYSTEM_ICON, SYSTEM_TITLE } from "@/components/yira/crew/systemIcons"
@@ -18,6 +20,7 @@ import { cn } from "@/lib/utils"
 
 /** "Emergencia Actual" block (Figma "Estado y alertas actuales", 264×75) or the calm variant. */
 function CurrentIssueBlock({ issue }: { issue: CurrentIssue | null }) {
+  const { t } = useTranslation()
   const system: SystemKey = issue?.system ?? "cardiovascular"
   const Icon = SYSTEM_ICON[system]
   const tone = STATUS[issue?.status ?? "stable"]
@@ -27,14 +30,13 @@ function CurrentIssueBlock({ issue }: { issue: CurrentIssue | null }) {
         <Icon aria-hidden strokeWidth={2.2} className={cn("size-14", tone.text)} />
       </span>
       <span className="flex min-w-0 flex-col">
-        <span className={cn("text-sm font-semibold", tone.text)}>{issue ? "Emergencia actual" : "Sin alertas activas"}</span>
+        <span className={cn("text-sm font-semibold", tone.text)}>{issue ? t("crew.detail.currentIssue") : t("crew.detail.noAlerts")}</span>
         <span className="text-xl leading-tight font-bold text-white">
-          {issue ? SYSTEM_ISSUE_TITLE[issue.system] : "Estado estable"}
+          {issue ? SYSTEM_ISSUE_TITLE[issue.system] : t("crew.detail.stable")}
         </span>
         {issue?.driver && (
           <span className="truncate text-sm text-white/80">
-            {issue.driver.label}: {Number.isInteger(issue.driver.value) ? issue.driver.value : issue.driver.value.toFixed(1)}{" "}
-            {issue.driver.unit}
+            {driverText(issue.driver).label}: {driverText(issue.driver).value}
           </span>
         )}
       </span>
@@ -45,7 +47,7 @@ function CurrentIssueBlock({ issue }: { issue: CurrentIssue | null }) {
     return (
       <Link
         to={`/protocolos/${issue.protocol}`}
-        aria-label={`Emergencia actual: ${SYSTEM_ISSUE_TITLE[issue.system]}. Ver protocolo`}
+        aria-label={t("crew.detail.issueLink", { title: SYSTEM_ISSUE_TITLE[issue.system] })}
         className={cn(base, "-m-2 p-2 transition-colors hover:bg-white/10 focus-visible:ring-3 focus-visible:ring-white/60 focus-visible:outline-none")}
       >
         {body}
@@ -71,6 +73,7 @@ function SystemIndicator({ system }: { system: SystemScore }) {
 
 /** "Detalles del tripulante" (Figma 42:335 / 89:179 / 89:242). */
 export function CrewDetailPage() {
+  const { t } = useTranslation()
   const params = useParams()
   const id = Number(params.id)
   const validId = Number.isInteger(id) && id > 0
@@ -122,10 +125,10 @@ export function CrewDetailPage() {
         />
 
         <div className="flex w-full max-w-[360px] flex-col lg:w-[300px]">
-          <p className={cn("text-2xl leading-[29px] font-bold", status.text)}>Estado General</p>
+          <p className={cn("text-2xl leading-[29px] font-bold", status.text)}>{t("crew.detail.overall")}</p>
           <h1 className="mt-1 text-4xl leading-[1.1] font-extrabold text-white lg:text-[56px]">{crewTitle(member)}</h1>
           <p className="mt-1 text-xl text-white">
-            Último escaneo: <span className="font-bold">{timeAgo(member.last_scan_at)}</span>
+            {t("crew.detail.lastScan")} <span className="font-bold">{timeAgo(member.last_scan_at)}</span>
           </p>
 
           <MoodRow daily={daily} className="mt-4" />
@@ -134,7 +137,7 @@ export function CrewDetailPage() {
             <CurrentIssueBlock issue={issue} />
           </div>
 
-          <ul aria-label="Otros sistemas" className="mt-6 grid grid-cols-2 gap-x-6 gap-y-6">
+          <ul aria-label={t("crew.detail.otherSystems")} className="mt-6 grid grid-cols-2 gap-x-6 gap-y-6">
             {others.map((system) => (
               <SystemIndicator key={system.key} system={system} />
             ))}
@@ -151,7 +154,7 @@ export function CrewDetailPage() {
           {next && (
             <Link
               to={`/tripulacion/${next.id}`}
-              aria-label={`Siguiente tripulante: ${next.name}`}
+              aria-label={t("crew.detail.nextMember", { name: next.name })}
               className="rounded-pill transition-transform hover:scale-105 focus-visible:ring-3 focus-visible:ring-white/60 focus-visible:outline-none lg:absolute lg:top-[279px] lg:right-[16px] lg:z-10"
             >
               <img src="/yira/crew/carousel-arrow.svg" alt="" width={48} height={46} />

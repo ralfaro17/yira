@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { errorMessage } from "@/api/client"
@@ -38,6 +39,7 @@ export function ForgotPasswordDialog({ open, onOpenChange, defaultEmail = "" }: 
 }
 
 function ForgotPasswordForm({ initialEmail, onDone }: { initialEmail: string; onDone: () => void }) {
+  const { t } = useTranslation()
   const reset = useRequestPasswordReset()
   const [email, setEmail] = useState(initialEmail)
 
@@ -45,7 +47,7 @@ function ForgotPasswordForm({ initialEmail, onDone }: { initialEmail: string; on
     event.preventDefault()
     try {
       await reset.mutateAsync(email.trim())
-      toast.success("Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.")
+      toast.success(t("login.reset.sent"))
       onDone()
     } catch {
       // Shown inline below the field.
@@ -55,22 +57,22 @@ function ForgotPasswordForm({ initialEmail, onDone }: { initialEmail: string; on
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <DialogHeader>
-        <DialogTitle className="text-xl font-bold">Recupera tu contraseña</DialogTitle>
+        <DialogTitle className="text-xl font-bold">{t("login.reset.title")}</DialogTitle>
         <DialogDescription className="text-white/75">
-          Escribe el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña.
+          {t("login.reset.description")}
         </DialogDescription>
       </DialogHeader>
 
       <Field data-invalid={reset.isError || undefined}>
         <FieldLabel htmlFor="reset-email" className="text-white/90">
-          Correo electrónico
+          {t("login.email")}
         </FieldLabel>
         <Input
           id="reset-email"
           type="email"
           autoComplete="email"
           required
-          placeholder="tucorreo@ejemplo.com"
+          placeholder={t("login.emailPlaceholder")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           aria-invalid={reset.isError || undefined}
@@ -78,7 +80,7 @@ function ForgotPasswordForm({ initialEmail, onDone }: { initialEmail: string; on
         />
         {reset.isError && (
           <FieldError className="text-[#ff8a8a]">
-            {errorMessage(reset.error, "No pudimos enviar el enlace. Inténtalo de nuevo.")}
+            {errorMessage(reset.error, t("login.reset.error"))}
           </FieldError>
         )}
       </Field>
@@ -90,7 +92,7 @@ function ForgotPasswordForm({ initialEmail, onDone }: { initialEmail: string; on
           className="h-11 rounded-pill bg-brand px-6 text-base text-white hover:bg-brand/90"
         >
           {reset.isPending && <Spinner />}
-          Enviar enlace
+          {t("login.reset.submit")}
         </Button>
       </DialogFooter>
     </form>

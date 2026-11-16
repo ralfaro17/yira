@@ -1,12 +1,15 @@
+import { useTranslation } from "react-i18next"
 import { Link, NavLink } from "react-router"
 
 import { useDashboard } from "@/api/hooks"
 import { cn } from "@/lib/utils"
 
+import { LanguageSwitch } from "./LanguageSwitch"
+
 const NAV = [
-  { to: "/tripulacion", label: "Tripulación" },
-  { to: "/protocolos", label: "Protocolos" },
-  { to: "/evaluacion", label: "Evaluación" },
+  { to: "/tripulacion", key: "layout.nav.crew" },
+  { to: "/protocolos", key: "layout.nav.protocols" },
+  { to: "/evaluacion", key: "layout.nav.evaluation" },
 ]
 
 export function YiraLogo({ className }: { className?: string }) {
@@ -23,12 +26,13 @@ export function YiraLogo({ className }: { className?: string }) {
 }
 
 export function AppHeader({ showNav = true }: { showNav?: boolean }) {
+  const { t } = useTranslation()
   const { data } = useDashboard()
   const unread = data?.totals.unread_alerts ?? 0
 
   return (
     <header className="flex flex-wrap items-center gap-x-6 gap-y-4 pt-8 md:pt-[62px]">
-      <Link to="/" aria-label="Inicio">
+      <Link to="/" aria-label={t("layout.nav.home")}>
         <YiraLogo />
       </Link>
 
@@ -45,13 +49,14 @@ export function AppHeader({ showNav = true }: { showNav?: boolean }) {
                 )
               }
             >
-              {item.label}
+              {t(item.key)}
             </NavLink>
           ))}
         </nav>
       )}
 
       <div className={cn("ml-auto flex items-center gap-[14px]", showNav && "md:ml-[86px]")}>
+        <LanguageSwitch />
         <NotificationBell unread={unread} />
         <ProfileLink />
       </div>
@@ -61,10 +66,11 @@ export function AppHeader({ showNav = true }: { showNav?: boolean }) {
 
 /** Bell linking to /notificaciones. The asset has a static "1" badge baked in: cover it with the live count. */
 export function NotificationBell({ unread, className }: { unread: number; className?: string }) {
+  const { t } = useTranslation()
   return (
     <Link
       to="/notificaciones"
-      aria-label={unread ? `Notificaciones (${unread} sin leer)` : "Notificaciones"}
+      aria-label={unread ? t("layout.notificationsUnread", { count: unread }) : t("layout.notifications")}
       className={cn("relative size-9 shrink-0 rounded-full", className)}
     >
       <img src="/yira/common/bell.png" alt="" className="size-full object-cover" />
@@ -82,8 +88,9 @@ export function NotificationBell({ unread, className }: { unread: number; classN
 }
 
 export function ProfileLink({ className }: { className?: string }) {
+  const { t } = useTranslation()
   return (
-    <Link to="/perfil" aria-label="Perfil" className={cn("size-[33px] shrink-0 rounded-full", className)}>
+    <Link to="/perfil" aria-label={t("layout.profile")} className={cn("size-[33px] shrink-0 rounded-full", className)}>
       <img src="/yira/common/profile.png" alt="" className="size-full object-cover" />
     </Link>
   )

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type HTMLAttributes } from "react"
+import { useTranslation } from "react-i18next"
 import * as THREE from "three"
 import { GLTFLoader, type GLTF } from "three/addons/loaders/GLTFLoader.js"
 import { clone } from "three/addons/utils/SkeletonUtils.js"
@@ -106,7 +107,7 @@ export function Yiri3D({
   isScanning = false,
   status = "stable",
   fallbackSrc = "/yira/login/mascot-waving.png",
-  alt = "Yiri, la mascota de YIRA",
+  alt: altProp,
   modelScale = 1,
   cameraDistance = 1.85,
   interactive = true,
@@ -114,6 +115,8 @@ export function Yiri3D({
   style,
   ...rest
 }: Yiri3DProps) {
+  const { t } = useTranslation()
+  const alt = altProp ?? t("layout.yiriAlt")
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isLoaded, setIsLoaded] = useState(false)

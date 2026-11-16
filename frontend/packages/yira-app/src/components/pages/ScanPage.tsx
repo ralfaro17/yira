@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router"
 
 import { useCrewMember, useLatestVitals, useRecordScan, useSystems } from "@/api/hooks"
@@ -15,6 +16,7 @@ import { toast } from "@/lib/toast"
 const TICK_MS = 100
 
 export function ScanPage() {
+  const { t } = useTranslation()
   const { id: rawId } = useParams()
   const id = rawId != null && /^\d+$/.test(rawId) ? Number(rawId) : undefined
   const { member, isPending, isError, refetch } = useCrewMember(id)
@@ -24,9 +26,9 @@ export function ScanPage() {
   if (!member) {
     return (
       <div className="flex flex-col items-center gap-4">
-        <ErrorState>No encontramos a este tripulante.</ErrorState>
+        <ErrorState>{t("scan.notFound")}</ErrorState>
         <Link to="/tripulacion" className="font-medium text-brand-link hover:underline">
-          Volver a Tripulación
+          {t("scan.backToCrew")}
         </Link>
       </div>
     )
@@ -36,6 +38,7 @@ export function ScanPage() {
 }
 
 function Scan({ member }: { member: DashboardCrew }) {
+  const { t } = useTranslation()
   const recordScan = useRecordScan()
   const { mutate: saveScan } = recordScan
   const [progress, setProgress] = useState(0)
@@ -56,24 +59,24 @@ function Scan({ member }: { member: DashboardCrew }) {
         setPhase("done")
         // Persist the scan: its time becomes the "Último escaneo" shown everywhere.
         saveScan(member.id, {
-          onError: (error) => toast.error(`No se pudo guardar el escaneo. ${errorMessage(error, "")}`.trim()),
+          onError: (error) => toast.error(`${t("scan.saveError")} ${errorMessage(error, "")}`.trim()),
         })
       }
     }, TICK_MS)
     return () => clearTimeout(timer)
-  }, [running, progress, saveScan, member.id])
+  }, [running, progress, saveScan, member.id, t])
 
   const caption =
     phase === "done"
-      ? "Escaneo completado"
+      ? t("scan.completed")
       : phase === "paused"
-        ? "Escaneo en pausa"
-        : `Analizando ${SCAN_STEPS[currentStep(progress)].caption}`
+        ? t("scan.paused")
+        : t("scan.analyzing", { caption: SCAN_STEPS[currentStep(progress)].caption })
 
   return (
     <div className="flex flex-col gap-6 md:gap-[19px]">
       <h1 className="text-center text-2xl font-extrabold text-white md:-mt-[13px] md:text-[32px]">
-        {phase === "done" ? "Escaneo de" : "Escaneando a"} {crewTitle(member)}
+        {t(phase === "done" ? "scan.headingDone" : "scan.headingRunning", { name: crewTitle(member) })}
       </h1>
 
       <div className="grid items-start gap-6 md:grid-cols-[300px_minmax(0,1fr)_300px] md:gap-0">

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { Link, Navigate, useParams } from "react-router"
 import { toast } from "sonner"
 
@@ -22,6 +23,7 @@ export function ProtocolDetailPage() {
 const PANEL = "rounded-[36px] border-white/30 bg-white/25"
 
 function ProtocolDetail({ protocol }: { protocol: Protocol }) {
+  const { t } = useTranslation()
   const theme = PROTOCOL_THEME[protocol.category]
   const { done, active, toggleStep, start, finish } = useProtocolProgress(protocol.slug)
   const total = protocol.steps.length
@@ -31,14 +33,14 @@ function ProtocolDetail({ protocol }: { protocol: Protocol }) {
   function onPrimary() {
     if (!active) {
       start()
-      toast(`Protocolo iniciado · ${protocol.title}`, {
-        description: "Marca cada paso del plan de acción a medida que lo completes.",
+      toast(t("protocols.detail.started", { title: protocol.title }), {
+        description: t("protocols.detail.startedHint"),
       })
       return
     }
     if (!allDone) return
     finish()
-    toast.success(`Protocolo finalizado · ${protocol.title}`)
+    toast.success(t("protocols.detail.finished", { title: protocol.title }))
   }
 
   return (
@@ -49,7 +51,7 @@ function ProtocolDetail({ protocol }: { protocol: Protocol }) {
           to="/protocolos"
           className="self-start text-[17px] leading-[22px] font-medium whitespace-pre text-white hover:underline"
         >
-          {"←  Volver a protocolos"}
+          {t("protocols.detail.back")}
         </Link>
         <div className="mt-[15px] flex flex-wrap items-center gap-4">
           <span className={cn("rounded-pill px-3.5 py-[5px] text-base leading-[21px] font-medium", theme.chip)}>
@@ -69,15 +71,15 @@ function ProtocolDetail({ protocol }: { protocol: Protocol }) {
         {/* Plan de acción */}
         <GlassPanel className={cn(PANEL, "px-[25px] pt-[19px] pb-6 md:min-h-[337px]")}>
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="text-[23px] leading-[30px] font-bold text-white">Plan de acción</h2>
+            <h2 className="text-[23px] leading-[30px] font-bold text-white">{t("protocols.detail.actionPlan")}</h2>
             <p className="text-sm leading-[18px] font-medium text-[#d8e2ec] md:w-[220px]" aria-live="polite">
-              {completed} / {total} completados
+              {t("protocols.detail.completed", { completed, total })}
             </p>
           </div>
           <div
             className="mt-[5px] h-[3px] overflow-hidden rounded-[2px] bg-white/22"
             role="progressbar"
-            aria-label="Progreso del plan de acción"
+            aria-label={t("protocols.detail.progress")}
             aria-valuemin={0}
             aria-valuemax={total}
             aria-valuenow={completed}
@@ -95,7 +97,7 @@ function ProtocolDetail({ protocol }: { protocol: Protocol }) {
                       <Checkbox
                         checked={checked}
                         onCheckedChange={(value) => toggleStep(step.number, value)}
-                        aria-label={`Paso ${step.number}: ${step.title}`}
+                        aria-label={t("protocols.detail.step", { number: step.number, title: step.title })}
                         className={cn(
                           "size-7 rounded-full border-transparent after:hidden [&_[data-slot=checkbox-indicator]>svg]:size-4",
                           theme.stepCheckbox,
@@ -156,13 +158,13 @@ function ProtocolDetail({ protocol }: { protocol: Protocol }) {
             type="button"
             onClick={onPrimary}
             disabled={active && !allDone}
-            title={active && !allDone ? "Completa todos los pasos para finalizar" : undefined}
+            title={active && !allDone ? t("protocols.detail.completeAll") : undefined}
             className={cn(
               "h-[50px] rounded-pill bg-white px-6 text-left text-base font-medium transition-opacity hover:opacity-90 focus-visible:ring-3 focus-visible:ring-white/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 md:w-[264px]",
               PROTOCOL_PRIMARY_TEXT[protocol.category],
             )}
           >
-            {active ? "Finalizar protocolo" : protocol.startLabel}
+            {active ? t("protocols.detail.finish") : protocol.startLabel}
           </button>
         </div>
       </div>

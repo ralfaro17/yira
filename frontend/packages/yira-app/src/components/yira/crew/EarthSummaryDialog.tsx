@@ -1,5 +1,6 @@
 import { copyText } from "@/platform"
 import { Copy } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -16,12 +17,13 @@ import { cn } from "@/lib/utils"
 
 /** "Resumen para la tierra" pill + dialog with a copyable plain-text report. */
 export function EarthSummaryDialog({ name, summary, className }: { name: string; summary: string; className?: string }) {
+  const { t } = useTranslation()
   async function copy() {
     try {
       await copyText(summary)
-      toast.success("Resumen copiado al portapapeles")
+      toast.success(t("crew.earth.copied"))
     } catch {
-      toast.error("No se pudo copiar el resumen")
+      toast.error(t("crew.earth.copyFailed"))
     }
   }
 
@@ -38,13 +40,13 @@ export function EarthSummaryDialog({ name, summary, className }: { name: string;
           />
         }
       >
-        Resumen para la tierra
+        {t("crew.earth.button")}
       </DialogTrigger>
       <DialogContent className="rounded-[28px] border border-glass-border bg-[#0b1b2b]/95 p-6 text-white backdrop-blur-[20px] sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-white">Resumen para la tierra</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-white">{t("crew.earth.button")}</DialogTitle>
           <DialogDescription className="text-white/70">
-            Informe de {name} listo para enviar al equipo médico en Tierra.
+            {t("crew.earth.description", { name })}
           </DialogDescription>
         </DialogHeader>
         <pre className="max-h-[50svh] overflow-auto rounded-2xl bg-black/40 p-4 font-sans text-sm leading-relaxed whitespace-pre-wrap text-white/90">
@@ -53,7 +55,7 @@ export function EarthSummaryDialog({ name, summary, className }: { name: string;
         <DialogFooter className="mx-0 mb-0 border-none bg-transparent p-0">
           <Button onClick={copy} className="h-10 rounded-pill bg-brand px-6 text-base text-white hover:bg-brand/85">
             <Copy aria-hidden />
-            Copiar
+            {t("crew.earth.copy")}
           </Button>
         </DialogFooter>
       </DialogContent>

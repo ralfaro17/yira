@@ -1,71 +1,101 @@
 import type { Alert } from "@/api/types"
+import i18n, { currentLanguage } from "@/i18n"
+import { metricLabel } from "@/lib/metrics"
 
 interface MetricCopy {
-  /** Noun phrase, capitalised: "Ritmo cardíaco". */
+  /** Noun phrase, capitalised, in the current language: "Ritmo cardíaco" / "Heart rate". */
   label: string
   unit: string
   digits: number
 }
 
-export const METRIC_COPY: Record<string, MetricCopy> = {
-  heart_rate: { label: "Ritmo cardíaco", unit: "bpm", digits: 0 },
-  hrv_rmssd: { label: "Variabilidad cardíaca", unit: "ms", digits: 0 },
-  spo2: { label: "Oxígeno en sangre", unit: "%", digits: 0 },
-  systolic_bp: { label: "Presión sistólica", unit: "mmHg", digits: 0 },
-  diastolic_bp: { label: "Presión diastólica", unit: "mmHg", digits: 0 },
-  respiratory_rate: { label: "Frecuencia respiratoria", unit: "rpm", digits: 0 },
-  body_temp: { label: "Temperatura corporal", unit: "°C", digits: 1 },
-  sleep_duration: { label: "Horas de sueño", unit: "h", digits: 1 },
-  radiation_dose: { label: "Radiación", unit: "mSv", digits: 2 },
-  cabin_co2: { label: "CO₂ en cabina", unit: "mmHg", digits: 1 },
-  exercise_minutes: { label: "Ejercicio de resistencia", unit: "min", digits: 0 },
+const METRIC_FORMAT: Record<string, Omit<MetricCopy, "label">> = {
+  heart_rate: { unit: "bpm", digits: 0 },
+  hrv_rmssd: { unit: "ms", digits: 0 },
+  spo2: { unit: "%", digits: 0 },
+  systolic_bp: { unit: "mmHg", digits: 0 },
+  diastolic_bp: { unit: "mmHg", digits: 0 },
+  respiratory_rate: { unit: "rpm", digits: 0 },
+  body_temp: { unit: "°C", digits: 1 },
+  sleep_duration: { unit: "h", digits: 1 },
+  radiation_dose: { unit: "mSv", digits: 2 },
+  cabin_co2: { unit: "mmHg", digits: 1 },
+  exercise_minutes: { unit: "min", digits: 0 },
 }
+
+/** Label (translated on every read), unit and precision for each known metric. */
+export const METRIC_COPY: Record<string, MetricCopy> = Object.fromEntries(
+  Object.entries(METRIC_FORMAT).map(([metric, format]) => [
+    metric,
+    {
+      ...format,
+      get label() {
+        return metricLabel(metric)
+      },
+    },
+  ]),
+)
 
 function copyFor(metric: string): MetricCopy {
-  return METRIC_COPY[metric] ?? { label: metric.replace(/_/g, " "), unit: "", digits: 1 }
+  return METRIC_COPY[metric] ?? { label: metricLabel(metric), unit: "", digits: 1 }
 }
 
+/** Lower-case a label mid-sentence; English keeps its capitalisation in the title patterns. */
 function lower(label: string) {
   // Keep acronyms such as "CO₂" intact.
   return /^[A-Z]{2}/.test(label) ? label : label.charAt(0).toLowerCase() + label.slice(1)
 }
 
-/** Short Spanish headline for an alert ("Ritmo cardíaco fuera de rango"). */
+/** Short headline for an alert ("Ritmo cardíaco fuera de rango" / "Heart rate out of range"). */
 export function alertTitle(alert: Pick<Alert, "kind" | "metric">): string {
   const { label } = copyFor(alert.metric)
+  const radiation = alert.metric === "radiation_dose"
   switch (alert.kind) {
     case "threshold":
-      return alert.metric === "radiation_dose" ? "Dosis de radiación elevada en 24 h" : `${label} fuera de rango`
+      return radiation
+        ? i18n.t("notifications.title_.radiationThreshold")
+        : i18n.t("notifications.title_.threshold", { label })
     case "anomaly":
-      return `${label} inusual`
+      return i18n.t("notifications.title_.anomaly", { label: currentLanguage() === "en" ? lower(label) : label })
     case "trend":
-      return `Tendencia en ${lower(label)}`
+      return i18n.t("notifications.title_.trend", { label: currentLanguage() === "en" ? label : lower(label) })
     case "cumulative":
-      return alert.metric === "radiation_dose" ? "Dosis de radiación acumulada" : `${label} acumulado`
+      return radiation
+        ? i18n.t("notifications.title_.radiationCumulative")
+        : i18n.t("notifications.title_.cumulative", { label: currentLanguage() === "en" ? lower(label) : label })
     default:
       return label
   }
 }
 
-/** One-line Spanish summary derived from metric + value (falls back to the backend message). */
-export function alertSummary(alert: Pick<Alert, "kind" | "metric" | "value" | "severity" | "message" | "occurrences">): string {
+/** One-line summary derived from metric + value (never the English-only backend message). */
+export function alertSummary(alert: Pick<Alert, "kind" | "metric" | "value" | "severity" | "occurrences">): string {
   const { label, unit, digits } = copyFor(alert.metric)
-  const severity = alert.severity === "critical" ? "nivel crítico" : alert.severity === "warning" ? "requiere atención" : "informativo"
-  const repeated = alert.occurrences > 1 ? ` · ${alert.occurrences} veces` : ""
-  if (alert.value == null) return alert.message
+  const severity = i18n.t(
+    alert.severity === "critical"
+      ? "notifications.severity.critical"
+      : alert.severity === "warning"
+        ? "notifications.severity.warning"
+        : "notifications.severity.info",
+  )
+  const repeated = alert.occurrences > 1 ? i18n.t("notifications.repeated", { count: alert.occurrences }) : ""
+  if (alert.value == null) return i18n.t("notifications.summary.noValue", { label, severity, repeated })
   const value = `${alert.value.toFixed(digits)}${unit === "%" ? "" : " "}${unit}`.trim()
   switch (alert.kind) {
     case "threshold":
       return alert.metric === "radiation_dose"
-        ? `${value} en las últimas 24 h (${severity})${repeated}`
-        : `${label} registró ${value} (${severity})${repeated}`
+        ? i18n.t("notifications.summary.radiationThreshold", { value, severity, repeated })
+        : i18n.t("notifications.summary.threshold", { label, value, severity, repeated })
     case "anomaly":
-      return `${label} en ${value}, lejos de su valor habitual${repeated}`
+      return i18n.t("notifications.summary.anomaly", { label, value, repeated })
     case "trend":
-      return `${alert.value > 0 ? "Sube" : "Baja"} ${Math.abs(alert.value).toFixed(2)} ${unit} por día en los últimos días`
+      return i18n.t(alert.value > 0 ? "notifications.summary.trendUp" : "notifications.summary.trendDown", {
+        value: Math.abs(alert.value).toFixed(2),
+        unit,
+      })
     case "cumulative":
-      return `Dosis acumulada de ${value} (${severity})`
+      return i18n.t("notifications.summary.cumulative", { value, severity })
     default:
-      return alert.message
+      return i18n.t("notifications.summary.noValue", { label, severity, repeated })
   }
 }

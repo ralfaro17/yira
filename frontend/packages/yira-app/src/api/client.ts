@@ -1,5 +1,7 @@
 import axios from "axios"
 
+import i18n, { currentLanguage } from "@/i18n"
+
 import { getApiConfig, onApiConfigChange } from "./config"
 
 /**
@@ -42,6 +44,8 @@ export async function clearSessionToken() {
 }
 
 api.interceptors.request.use(async (request) => {
+  // Backend (allauth/DRF) error messages and emails follow the UI language.
+  request.headers.set("Accept-Language", currentLanguage())
   if (getApiConfig().mode === "app") {
     const current = await getSessionToken()
     if (current) request.headers.set("X-Session-Token", current)
@@ -68,9 +72,9 @@ export function isUnauthorized(error: unknown) {
 }
 
 /** Human-readable message from a DRF / allauth error response. */
-export function errorMessage(error: unknown, fallback = "Algo salió mal. Inténtalo de nuevo.") {
+export function errorMessage(error: unknown, fallback: string = i18n.t("common.errors.generic")) {
   if (!axios.isAxiosError(error)) return fallback
-  if (!error.response) return "No hay conexión con el centro de control."
+  if (!error.response) return i18n.t("common.errors.offline")
   const data = error.response.data as { errors?: { message: string }[]; detail?: string } | undefined
   return data?.errors?.[0]?.message ?? data?.detail ?? fallback
 }

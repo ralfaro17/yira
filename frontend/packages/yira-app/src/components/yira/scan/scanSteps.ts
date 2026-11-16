@@ -1,18 +1,25 @@
+import i18n, { translatedMap } from "@/i18n"
+
 export type StepState = "done" | "running" | "pending"
 
 /** The four scan steps of the "Progreso" card, each taking 25% of the scan. */
-export const SCAN_STEPS = [
-  { label: "Signos vitales", caption: "signos vitales" },
-  { label: "Sistema inmune", caption: "sistema inmune" },
-  { label: "Óseo-muscular", caption: "sistema óseo-muscular" },
-  { label: "Salud mental", caption: "salud mental" },
-] as const
+const step = (id: "vitals" | "immune" | "musculoskeletal" | "mental") => ({
+  id,
+  get label() {
+    return i18n.t(`scan.steps.${id}.label`)
+  },
+  get caption() {
+    return i18n.t(`scan.steps.${id}.caption`)
+  },
+})
 
-export const STEP_STATE_LABEL: Record<StepState, string> = {
-  done: "Listo",
-  running: "En curso",
-  pending: "Pendiente",
-}
+export const SCAN_STEPS = [step("vitals"), step("immune"), step("musculoskeletal"), step("mental")] as const
+
+export const STEP_STATE_LABEL: Record<StepState, string> = translatedMap({
+  done: () => i18n.t("scan.stepState.done"),
+  running: () => i18n.t("scan.stepState.running"),
+  pending: () => i18n.t("scan.stepState.pending"),
+})
 
 export const STEP_DOT: Record<StepState, string> = {
   done: "/yira/scan/dot-done.svg",

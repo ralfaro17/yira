@@ -1,4 +1,5 @@
 import type { CrewStatus } from "@/api/types"
+import i18n, { translatedMap } from "@/i18n"
 
 /**
  * Yiri mascot variants (Figma "yiri blen 1/2"): blue headphones + smile for
@@ -11,9 +12,9 @@ export const YIRI_SRC: Record<CrewStatus, string> = {
   unknown: "/yira/crew/yiri-stable.png",
 }
 
-export const YIRI_ALT: Record<CrewStatus, string> = {
-  stable: "Yiri sonriente: tripulante estable",
-  observation: "Yiri pensativo: tripulante en observación",
-  critical: "Yiri preocupado: tripulante en estado crítico",
-  unknown: "Yiri, asistente de YIRA",
-}
+export const YIRI_ALT: Record<CrewStatus, string> = translatedMap({
+  stable: () => i18n.t("crew.mascot.stable"),
+  observation: () => i18n.t("crew.mascot.observation"),
+  critical: () => i18n.t("crew.mascot.critical"),
+  unknown: () => i18n.t("crew.mascot.unknown"),
+})

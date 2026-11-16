@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 
+import i18n from "@/i18n"
+
 import { api, clearSessionToken, ensureCsrf, getSessionToken, setSessionToken } from "./client"
 import { authBase, getApiConfig } from "./config"
 import type { Alert, Dashboard, Me, Paginated, Scan, SessionResponse, SessionUser, SystemsResponse } from "./types"
@@ -57,7 +59,7 @@ export function useLogin() {
       const credentials = login.includes("@") ? { email: login } : { username: login }
       const { data } = await api.post<LoginResponse>(`${authBase()}/login`, { ...credentials, password })
       if (isAppMode()) {
-        if (!data.meta.session_token) throw new Error("El servidor no devolvió un token de sesión.")
+        if (!data.meta.session_token) throw new Error(i18n.t("common.errors.noSessionToken"))
         await setSessionToken(data.meta.session_token, remember)
       } else {
         // allauth rotates the CSRF token on login; the cookie is updated automatically.

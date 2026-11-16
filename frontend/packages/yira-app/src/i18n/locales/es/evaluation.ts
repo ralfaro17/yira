@@ -1,0 +1,31 @@
+const evaluation = {
+  title: "Evaluación",
+  subtitle: "Estado de salud por sistema · Último escaneo {{when}}",
+  lastScan: "Último escaneo: {{when}}",
+  lastScanLabel: "Último escaneo",
+  viewDetails: "Ver detalles",
+  viewDetailsOf: "Ver detalles de {{name}}",
+  back: "←  Volver a evaluación",
+  photoOf: "Fotografía de {{name}}",
+  crewMember: "Tripulante",
+  bySystem: "Evaluación por sistema",
+  bySystemSubtitle: "Resultados del último escaneo registrado",
+  driversError: "No se pudieron cargar los factores del último escaneo.",
+  retry: "Reintentar",
+  summaryLabel: "Resumen del estado",
+  recommendProtocol: "Se recomienda seguir el protocolo",
+  mainDrivers: "Factores principales · {{system}}:",
+  summary: {
+    stableTitle: "Estado estable",
+    stableText: "Los cuatro sistemas conservan los valores registrados en la evaluación de {{name}}.",
+    observationTitle: "Seguimiento en observación",
+    observationText_one: "{{systems}}. Consulta este indicador junto con los demás resultados de {{name}}.",
+    observationText_other: "{{systems}}. Consulta estos indicadores junto con los demás resultados de {{name}}.",
+    criticalTitle: "Estado crítico",
+    criticalText: "{{systems}}. Estos son los indicadores más bajos de {{name}}.",
+    unknownTitle: "Sin datos suficientes",
+    unknownText: "Aún no hay un escaneo registrado con el que evaluar los sistemas de {{name}}.",
+  },
+}
+
+export default evaluation

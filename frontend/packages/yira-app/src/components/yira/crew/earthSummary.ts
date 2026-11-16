@@ -1,14 +1,17 @@
 import { format } from "date-fns"
-import { es } from "date-fns/locale"
 
+import { getProtocol } from "@/data/protocols"
 import type { CurrentIssue, DashboardCrew, StressLevel, SystemScore } from "@/api/types"
+import i18n from "@/i18n"
 import { STATUS, STRESS_LABEL, SYSTEM_ISSUE_TITLE, SYSTEM_LABEL, SYSTEM_ORDER } from "@/lib/status"
-import { timeAgo } from "@/lib/time"
+import { dateLocale, timeAgo } from "@/lib/time"
 
-const VITALS: { key: string; label: string; unit: string }[] = [
-  { key: "heart_rate", label: "Frecuencia cardíaca", unit: "lpm" },
-  { key: "spo2", label: "Saturación de oxígeno (SpO₂)", unit: "%" },
-  { key: "body_temp", label: "Temperatura corporal", unit: "°C" },
+import { crewRole, driverText, missionName } from "./crewCopy"
+
+const VITALS = [
+  { key: "heart_rate", label: () => i18n.t("crew.earth.report.heartRate"), unit: () => i18n.t("crew.earth.report.heartRateUnit") },
+  { key: "spo2", label: () => i18n.t("crew.earth.report.spo2"), unit: () => "%" },
+  { key: "body_temp", label: () => i18n.t("crew.earth.report.bodyTemp"), unit: () => "°C" },
 ]
 
 function num(value: number, digits = 1) {
@@ -27,49 +30,62 @@ export function buildEarthSummary({
   stress: StressLevel | null
   issue: CurrentIssue | null
 }): string {
+  const t = i18n.t.bind(i18n)
+  const noData = t("crew.earth.report.noData")
   const lines: string[] = []
-  lines.push(`RESUMEN PARA LA TIERRA · ${format(new Date(), "d 'de' MMMM yyyy, HH:mm", { locale: es })}`)
+  const date = format(new Date(), t("crew.earth.report.dateFormat"), { locale: dateLocale() })
+  lines.push(t("crew.earth.report.heading", { date }))
   lines.push("")
-  const age = member.age != null ? `, ${member.age} años` : ""
-  lines.push(`Tripulante: ${member.name}${age}${member.role ? ` (${member.role})` : ""}`)
-  if (member.mission) lines.push(`Misión: ${member.mission}`)
-  lines.push(`Estado general: ${STATUS[member.status].label}`)
-  lines.push(`Último escaneo: ${timeAgo(member.last_scan_at)}`)
+  lines.push(
+    t("crew.earth.report.member", {
+      name: member.name,
+      age: member.age != null ? t("crew.earth.report.age", { age: member.age }) : "",
+      role: member.role ? ` (${crewRole(member.role)})` : "",
+    }),
+  )
+  if (member.mission) lines.push(t("crew.earth.report.mission", { mission: missionName(member.mission) }))
+  lines.push(t("crew.earth.report.status", { status: STATUS[member.status].label }))
+  lines.push(t("crew.earth.report.lastScan", { time: timeAgo(member.last_scan_at) }))
 
   lines.push("")
-  lines.push("Sistemas:")
+  lines.push(t("crew.earth.report.systems"))
   for (const key of SYSTEM_ORDER) {
     const system = systems.find((s) => s.key === key)
     if (!system) continue
-    const score = system.score == null ? "sin datos" : `${Math.round(system.score)}/100`
-    const estimated = system.estimated ? " (estimado)" : ""
+    const score = system.score == null ? noData : `${Math.round(system.score)}/100`
+    const estimated = system.estimated ? t("crew.earth.report.estimated") : ""
     lines.push(`- ${SYSTEM_LABEL[key]}${estimated}: ${score} · ${STATUS[system.status].label}`)
   }
-  lines.push(`Nivel de estrés: ${stress ? STRESS_LABEL[stress] : "sin datos"}`)
+  lines.push(t("crew.earth.report.stress", { level: stress ? STRESS_LABEL[stress] : noData }))
 
   const vitals: string[] = []
   for (const { key, label, unit } of VITALS) {
     const v = member.latest[key]
-    if (v) vitals.push(`- ${label}: ${num(v.value)} ${v.unit || unit}`)
+    if (v) vitals.push(`- ${label()}: ${num(v.value)} ${v.unit || unit()}`)
   }
   const sys = member.latest.systolic_bp
   const dia = member.latest.diastolic_bp
-  if (sys && dia) vitals.push(`- Presión arterial: ${num(sys.value, 0)}/${num(dia.value, 0)} ${sys.unit || "mmHg"}`)
+  if (sys && dia)
+    vitals.push(`- ${t("crew.earth.report.bloodPressure")}: ${num(sys.value, 0)}/${num(dia.value, 0)} ${sys.unit || "mmHg"}`)
   if (vitals.length) {
     lines.push("")
-    lines.push("Signos vitales recientes:")
+    lines.push(t("crew.earth.report.vitals"))
     lines.push(...vitals)
   }
 
   lines.push("")
   if (issue) {
-    lines.push(`Emergencia actual: ${SYSTEM_ISSUE_TITLE[issue.system]} (${STATUS[issue.status].label}, ${Math.round(issue.score)}/100)`)
-    if (issue.driver) {
-      lines.push(`Factor principal: ${issue.driver.label} = ${num(issue.driver.value)} ${issue.driver.unit}`.trimEnd())
-    }
-    if (issue.protocol) lines.push(`Protocolo sugerido: ${issue.protocol}`)
+    lines.push(
+      t("crew.earth.report.currentIssue", {
+        title: SYSTEM_ISSUE_TITLE[issue.system],
+        status: STATUS[issue.status].label,
+        score: Math.round(issue.score),
+      }),
+    )
+    if (issue.driver) lines.push(t("crew.earth.report.driver", driverText(issue.driver)))
+    if (issue.protocol) lines.push(t("crew.earth.report.protocol", { protocol: getProtocol(issue.protocol)?.title ?? issue.protocol }))
   } else {
-    lines.push("Sin alertas activas. Estado estable.")
+    lines.push(t("crew.earth.report.allClear"))
   }
   return lines.join("\n")
 }

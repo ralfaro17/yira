@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent } from "react"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -19,11 +20,12 @@ export function ConsultEarthDialog({ protocolTitle }: { protocolTitle: string })
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState("")
   const fieldId = useId()
+  const { t } = useTranslation()
 
   function send(event: FormEvent) {
     event.preventDefault()
     if (!message.trim()) return
-    toast.success("Mensaje enviado al equipo médico · Tierra")
+    toast.success(t("protocols.consult.sent"))
     setMessage("")
     setOpen(false)
   }
@@ -38,34 +40,34 @@ export function ConsultEarthDialog({ protocolTitle }: { protocolTitle: string })
           />
         }
       >
-        Consultar a Tierra
+        {t("protocols.consult.trigger")}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={send} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>Consultar a Tierra</DialogTitle>
+            <DialogTitle>{t("protocols.consult.title")}</DialogTitle>
             <DialogDescription>
-              Envía un mensaje breve al equipo médico sobre el protocolo «{protocolTitle}».
+              {t("protocols.consult.description", { title: protocolTitle })}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
             <label htmlFor={fieldId} className="text-sm font-medium">
-              Mensaje
+              {t("protocols.consult.message")}
             </label>
             <Textarea
               id={fieldId}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Describe la situación o tu consulta…"
+              placeholder={t("protocols.consult.placeholder")}
               rows={4}
               maxLength={500}
               required
             />
           </div>
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>Cancelar</DialogClose>
+            <DialogClose render={<Button type="button" variant="outline" />}>{t("protocols.consult.cancel")}</DialogClose>
             <Button type="submit" disabled={!message.trim()} className="bg-brand text-white hover:bg-brand/85">
-              Enviar
+              {t("protocols.consult.send")}
             </Button>
           </DialogFooter>
         </form>

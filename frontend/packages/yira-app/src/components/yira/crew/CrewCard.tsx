@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
 import type { DashboardCrew } from "@/api/types"
@@ -7,10 +8,14 @@ import { STATUS, crewTitle } from "@/lib/status"
 import { timeAgo } from "@/lib/time"
 import { cn } from "@/lib/utils"
 
+import { crewRole } from "./crewCopy"
+
 /** Split "hace 5 min" into the regular prefix and the bold amount, as in the Figma copy. */
-function scanParts(iso: string | null) {
+function scanParts(iso: string | null, agoPrefix: string) {
   const text = timeAgo(iso)
-  return text.startsWith("hace ") ? { prefix: "hace ", amount: text.slice(5) } : { prefix: "", amount: text }
+  return agoPrefix && text.startsWith(agoPrefix)
+    ? { prefix: agoPrefix, amount: text.slice(agoPrefix.length) }
+    : { prefix: "", amount: text }
 }
 
 /**
@@ -27,8 +32,9 @@ export function CrewCard({
   /** Non-focused deck cards are inert (their neighbour overlay handles clicks). */
   inert?: boolean
 }) {
+  const { t } = useTranslation()
   const status = STATUS[member.status]
-  const scan = scanParts(member.last_scan_at)
+  const scan = scanParts(member.last_scan_at, t("crew.card.agoPrefix"))
   return (
     <article
       inert={inert}
@@ -48,21 +54,21 @@ export function CrewCard({
         {crewTitle(member)}
       </h2>
       <p className="absolute top-[405px] left-[35px] w-[230px] truncate text-2xl leading-none tracking-[0.24px] text-neutral-900">
-        {member.role || "Tripulante"}
+        {crewRole(member.role)}
       </p>
       <p className="absolute top-[431px] left-[35px] text-base leading-none tracking-[0.16px]">
-        Último escaneo: {scan.prefix}
+        {t("crew.card.lastScan")} {scan.prefix}
         <span className="font-extrabold">{scan.amount}</span>
       </p>
       <Link
         to={`/tripulacion/${member.id}`}
-        aria-label={`Detalles de ${member.name}`}
+        aria-label={t("crew.card.detailsOf", { name: member.name })}
         className={cn(
           "absolute top-[456px] left-[108px] inline-flex h-[46px] w-[137px] items-center justify-center gap-3 rounded-pill bg-white text-xl font-medium tracking-[-0.4px] transition-transform hover:scale-[1.03] focus-visible:ring-3 focus-visible:ring-white/60 focus-visible:outline-none",
           status.text,
         )}
       >
-        Detalles
+        {t("crew.card.details")}
         <StatusArrow status={member.status} />
       </Link>
     </article>

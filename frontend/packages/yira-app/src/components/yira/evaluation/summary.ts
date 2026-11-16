@@ -1,11 +1,12 @@
 import type { CrewStatus, CurrentIssue, SystemDetail, SystemKey, SystemScore } from "@/api/types"
+import i18n from "@/i18n"
 import { SYSTEM_ISSUE_TITLE, SYSTEM_LABEL, SYSTEM_ORDER } from "@/lib/status"
 import { timeAgo } from "@/lib/time"
 
-/** "hace 3 h" / "ayer" — lower-cased so it reads after "Último escaneo:". */
+/** "hace 3 h" / "ayer" — lower-cased so it reads after "Último escaneo:" / "Last scan:". */
 export function lastScanText(iso: string | null | undefined): string {
   const text = timeAgo(iso)
-  return text === "Ayer" ? "ayer" : text
+  return text === i18n.t("time.yesterday") ? text.toLowerCase() : text
 }
 
 /** Systems sorted in the canonical display order (missing ones are skipped). */
@@ -40,8 +41,8 @@ export function evaluationSummary(
 
   if (status === "stable") {
     return {
-      title: "Estado estable",
-      text: `Los cuatro sistemas conservan los valores registrados en la evaluación de ${name}.`,
+      title: i18n.t("evaluation.summary.stableTitle"),
+      text: i18n.t("evaluation.summary.stableText", { name }),
       protocol: null,
     }
   }
@@ -49,10 +50,13 @@ export function evaluationSummary(
   if (status === "observation") {
     const low = scored.filter((s) => (s.score ?? 100) < 75).sort(byScore)
     const shown = low.length > 0 ? low : scored.sort(byScore).slice(0, 1)
-    const plural = shown.length > 1
     return {
-      title: "Seguimiento en observación",
-      text: `${shown.map(pct).join(" · ")}. Consulta ${plural ? "estos indicadores" : "este indicador"} junto con los demás resultados de ${name}.`,
+      title: i18n.t("evaluation.summary.observationTitle"),
+      text: i18n.t("evaluation.summary.observationText", {
+        count: shown.length,
+        systems: shown.map(pct).join(" · "),
+        name,
+      }),
       protocol: null,
     }
   }
@@ -62,8 +66,8 @@ export function evaluationSummary(
     const shown = critical.length > 0 ? critical : scored.sort(byScore).slice(0, 2)
     const slug = issue?.protocol ?? null
     return {
-      title: "Estado crítico",
-      text: `${shown.map(pct).join(" · ")}. Estos son los indicadores más bajos de ${name}.`,
+      title: i18n.t("evaluation.summary.criticalTitle"),
+      text: i18n.t("evaluation.summary.criticalText", { systems: shown.map(pct).join(" · "), name }),
       protocol: slug
         ? { slug, title: protocolTitle(slug) ?? SYSTEM_ISSUE_TITLE[issue?.system as SystemKey] ?? slug }
         : null,
@@ -71,8 +75,8 @@ export function evaluationSummary(
   }
 
   return {
-    title: "Sin datos suficientes",
-    text: `Aún no hay un escaneo registrado con el que evaluar los sistemas de ${name}.`,
+    title: i18n.t("evaluation.summary.unknownTitle"),
+    text: i18n.t("evaluation.summary.unknownText", { name }),
     protocol: null,
   }
 }

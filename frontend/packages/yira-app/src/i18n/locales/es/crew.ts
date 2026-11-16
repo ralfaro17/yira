@@ -1,0 +1,76 @@
+const crew = {
+  title: "Tripulación",
+  /** Role the demo data seeds; translated when shown. */
+  defaultRole: "Tripulante",
+  /** Mission name the demo data seeds; translated when shown. */
+  defaultMission: "Misión a Marte",
+  card: {
+    lastScan: "Último escaneo:",
+    /** Prefix timeAgo() puts before the amount ("hace 5 min"); empty if none. */
+    agoPrefix: "hace ",
+    details: "Detalles",
+    detailsOf: "Detalles de {{name}}",
+  },
+  deck: {
+    previous: "Tripulante anterior",
+    next: "Tripulante siguiente",
+    position: "{{index}} de {{total}}: {{name}}",
+    show: "Ver a {{name}}",
+  },
+  mascot: {
+    stable: "Yiri sonriente: tripulante estable",
+    observation: "Yiri pensativo: tripulante en observación",
+    critical: "Yiri preocupado: tripulante en estado crítico",
+    unknown: "Yiri, asistente de YIRA",
+  },
+  startScan: "Comenzar Escaneo",
+  startScanFor: "Comenzar escaneo de {{name}}",
+  startScanLabel: "Comenzar escaneo",
+  mood: {
+    label: "Ánimo de los últimos días",
+    levels: ["Muy mal", "Mal", "Regular", "Bien", "Muy bien"],
+    noData: "Sin datos",
+  },
+  detail: {
+    overall: "Estado General",
+    lastScan: "Último escaneo:",
+    currentIssue: "Emergencia actual",
+    noAlerts: "Sin alertas activas",
+    stable: "Estado estable",
+    issueLink: "Emergencia actual: {{title}}. Ver protocolo",
+    otherSystems: "Otros sistemas",
+    nextMember: "Siguiente tripulante: {{name}}",
+  },
+  earth: {
+    button: "Resumen para la tierra",
+    description: "Informe de {{name}} listo para enviar al equipo médico en Tierra.",
+    copy: "Copiar",
+    copied: "Resumen copiado al portapapeles",
+    copyFailed: "No se pudo copiar el resumen",
+    report: {
+      heading: "RESUMEN PARA LA TIERRA · {{date}}",
+      dateFormat: "d 'de' MMMM yyyy, HH:mm",
+      member: "Tripulante: {{name}}{{age}}{{role}}",
+      age: ", {{age}} años",
+      mission: "Misión: {{mission}}",
+      status: "Estado general: {{status}}",
+      lastScan: "Último escaneo: {{time}}",
+      systems: "Sistemas:",
+      noData: "sin datos",
+      estimated: " (estimado)",
+      stress: "Nivel de estrés: {{level}}",
+      vitals: "Signos vitales recientes:",
+      heartRate: "Frecuencia cardíaca",
+      heartRateUnit: "lpm",
+      spo2: "Saturación de oxígeno (SpO₂)",
+      bodyTemp: "Temperatura corporal",
+      bloodPressure: "Presión arterial",
+      currentIssue: "Emergencia actual: {{title}} ({{status}}, {{score}}/100)",
+      driver: "Factor principal: {{label}} = {{value}}",
+      protocol: "Protocolo sugerido: {{protocol}}",
+      allClear: "Sin alertas activas. Estado estable.",
+    },
+  },
+}
+
+export default crew

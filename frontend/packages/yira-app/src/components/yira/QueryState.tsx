@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
@@ -16,17 +17,18 @@ export function LoadingPanels({ count = 3, className = "h-[446px]" }: { count?: 
 }
 
 export function ErrorState({ onRetry, children }: { onRetry?: () => void; children?: ReactNode }) {
+  const { t } = useTranslation()
   return (
     <Empty className="rounded-panel border border-glass-border bg-glass text-white backdrop-blur-[20px]">
       <EmptyHeader>
-        <EmptyTitle>No pudimos cargar los datos</EmptyTitle>
+        <EmptyTitle>{t("layout.error.title")}</EmptyTitle>
         <EmptyDescription className="text-white/80">
-          {children ?? "Revisa la conexión con el centro de control e inténtalo de nuevo."}
+          {children ?? t("layout.error.description")}
         </EmptyDescription>
       </EmptyHeader>
       {onRetry && (
         <Button onClick={onRetry} className="rounded-pill bg-brand px-6 text-white">
-          Reintentar
+          {t("layout.error.retry")}
         </Button>
       )}
     </Empty>
@@ -34,12 +36,13 @@ export function ErrorState({ onRetry, children }: { onRetry?: () => void; childr
 }
 
 export function EmptyCrew() {
+  const { t } = useTranslation()
   return (
     <Empty className="rounded-panel border border-glass-border bg-glass text-white backdrop-blur-[20px]">
       <EmptyHeader>
-        <EmptyTitle>Aún no hay tripulantes</EmptyTitle>
+        <EmptyTitle>{t("layout.emptyCrew.title")}</EmptyTitle>
         <EmptyDescription className="text-white/80">
-          Ejecuta <code>manage.py simulate_mission</code> o registra tripulantes desde el panel de administración.
+          {t("layout.emptyCrew.before")} <code>manage.py simulate_mission</code> {t("layout.emptyCrew.after")}
         </EmptyDescription>
       </EmptyHeader>
     </Empty>

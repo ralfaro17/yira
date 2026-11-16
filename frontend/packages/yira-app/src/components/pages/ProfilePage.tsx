@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router"
 import { toast } from "sonner"
 
@@ -9,31 +10,32 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { GlassPanel } from "@/components/yira/GlassPanel"
+import { LanguageSwitch } from "@/components/yira/LanguageSwitch"
 import { PageHeading } from "@/components/yira/PageHeading"
 import { ErrorState } from "@/components/yira/QueryState"
 import { EditProfileDialog } from "@/components/yira/profile/EditProfileDialog"
 import { PreferenceRow, PreferenceSelect, type Option } from "@/components/yira/profile/PreferenceRow"
 import { CONTROL } from "@/components/yira/profile/styles"
+import i18n from "@/i18n"
 import { cn } from "@/lib/utils"
 
-const LANGUAGES: Option[] = [
-  { value: "es", label: "Español" },
-  { value: "en", label: "English (próximamente)", disabled: true },
+const timezones = (): Option[] => [
+  { value: "America/Managua", label: i18n.t("profile.timezones.earth") },
+  { value: "UTC", label: i18n.t("profile.timezones.utc") },
+  { value: "America/Chicago", label: i18n.t("profile.timezones.houston") },
+  { value: "Europe/Madrid", label: i18n.t("profile.timezones.madrid") },
 ]
 
-const TIMEZONES: Option[] = [
-  { value: "America/Managua", label: "Tierra · UTC−6" },
-  { value: "UTC", label: "UTC" },
-  { value: "America/Chicago", label: "Houston · UTC−6/−5" },
-  { value: "Europe/Madrid", label: "Madrid · UTC+1/+2" },
+const units = (): Option[] => [
+  { value: "metric", label: i18n.t("profile.unitOptions.metric") },
+  { value: "imperial", label: i18n.t("profile.unitOptions.imperial") },
 ]
 
-const UNITS: Option[] = [
-  { value: "metric", label: "Métrico" },
-  { value: "imperial", label: "Imperial" },
-]
+/** Seeded `role_label` default (backend); shown translated while the user hasn't changed it. */
+const DEFAULT_ROLE_LABEL = "Centro de control · Tierra"
 
-type Prefs = Pick<Me, "language" | "timezone" | "emergency_alerts" | "daily_summary_time" | "units">
+/** The language is not part of the draft: the LanguageSwitch saves it immediately. */
+type Prefs = Pick<Me, "timezone" | "emergency_alerts" | "daily_summary_time" | "units">
 
 const PILL = "h-auto rounded-pill px-6 py-3 text-lg font-medium"
 
@@ -58,6 +60,7 @@ export function ProfilePage() {
 }
 
 function Profile({ me }: { me: Me }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const update = useUpdateMe()
   const logout = useLogout()
@@ -75,67 +78,66 @@ function Profile({ me }: { me: Me }) {
     update.mutate(draft, {
       onSuccess: () => {
         setDraft({})
-        toast.success("Preferencias guardadas")
+        toast.success(t("profile.saved"))
       },
-      onError: () => toast.error("No se pudieron guardar los cambios."),
+      onError: () => toast.error(t("profile.saveError")),
     })
 
   const signOut = () =>
     logout.mutate(undefined, {
       onSuccess: () => navigate("/iniciar-sesion", { replace: true }),
-      onError: () => toast.error("No se pudo cerrar la sesión."),
+      onError: () => toast.error(t("profile.signOutError")),
     })
 
   return (
     <div className="flex flex-col gap-6 md:gap-8">
-      <PageHeading title="Perfil" />
+      <PageHeading title={t("profile.title")} />
 
       <div className="grid items-start gap-6 md:grid-cols-[340px_minmax(0,1fr)]">
         {/* Identity card */}
         <GlassPanel className="items-center gap-4 p-[28px] text-center">
           <div className="size-[150px] overflow-hidden rounded-full border-4 border-brand bg-white/10">
-            <img src={me.photo || "/yira/profile/avatar-default.png"} alt={`Foto de ${name}`} className="size-full object-cover" />
+            <img src={me.photo || "/yira/profile/avatar-default.png"} alt={t("profile.photoAlt", { name })} className="size-full object-cover" />
           </div>
           <div className="flex flex-col gap-1">
             <h2 className="text-[26px] font-extrabold leading-tight">{name}</h2>
-            {me.role_label && <p className="text-[15px] text-white/80">{me.role_label}</p>}
+            {me.role_label && (
+              <p className="text-[15px] text-white/80">
+                {me.role_label === DEFAULT_ROLE_LABEL ? t("profile.defaultRole") : me.role_label}
+              </p>
+            )}
           </div>
           <span className="inline-flex items-center gap-2 rounded-pill bg-white/15 px-4 py-1.5 text-sm font-medium">
             <span aria-hidden className="size-2 rounded-full bg-[#2fd36b]" />
-            Sesión activa
+            {t("profile.activeSession")}
           </span>
           <Button
             variant="outline"
             onClick={() => setEditing(true)}
             className={cn(PILL, "mt-2 border-2 border-white bg-transparent text-white hover:bg-white/10 hover:text-white")}
           >
-            Editar perfil
+            {t("profile.edit")}
           </Button>
         </GlassPanel>
 
         {/* Preferences card */}
         <GlassPanel className="p-[28px]">
-          <h2 className="text-[26px] font-extrabold">Preferencias</h2>
+          <h2 className="text-[26px] font-extrabold">{t("profile.preferences")}</h2>
           <div className="mt-2 flex flex-col">
-            <PreferenceRow id="pref-language" label="Idioma">
-              <PreferenceSelect
-                id="pref-language"
-                value={prefs.language}
-                options={withCurrent(LANGUAGES, prefs.language)}
-                onChange={(v) => set("language", v)}
-              />
+            <PreferenceRow id="pref-language" label={t("profile.language")}>
+              <LanguageSwitch />
             </PreferenceRow>
-            <PreferenceRow id="pref-timezone" label="Zona horaria">
+            <PreferenceRow id="pref-timezone" label={t("profile.timezone")}>
               <PreferenceSelect
                 id="pref-timezone"
                 value={prefs.timezone}
-                options={withCurrent(TIMEZONES, prefs.timezone)}
+                options={withCurrent(timezones(), prefs.timezone)}
                 onChange={(v) => set("timezone", v)}
               />
             </PreferenceRow>
-            <PreferenceRow id="pref-alerts" label="Alertas de emergencia">
+            <PreferenceRow id="pref-alerts" label={t("profile.emergencyAlerts")}>
               <label className="flex items-center gap-3 text-[15px] text-white/85">
-                {prefs.emergency_alerts ? "Activadas" : "Desactivadas"}
+                {prefs.emergency_alerts ? t("profile.enabled") : t("profile.disabled")}
                 <Switch
                   aria-labelledby="pref-alerts-label"
                   checked={prefs.emergency_alerts}
@@ -144,7 +146,7 @@ function Profile({ me }: { me: Me }) {
                 />
               </label>
             </PreferenceRow>
-            <PreferenceRow id="pref-summary" label="Resumen diario">
+            <PreferenceRow id="pref-summary" label={t("profile.dailySummary")}>
               <Input
                 id="pref-summary"
                 type="time"
@@ -154,11 +156,11 @@ function Profile({ me }: { me: Me }) {
                 className={cn(CONTROL, "w-auto [color-scheme:dark]")}
               />
             </PreferenceRow>
-            <PreferenceRow id="pref-units" label="Unidades">
+            <PreferenceRow id="pref-units" label={t("profile.units")}>
               <PreferenceSelect
                 id="pref-units"
                 value={prefs.units}
-                options={UNITS}
+                options={units()}
                 onChange={(v) => set("units", v as Me["units"])}
               />
             </PreferenceRow>
@@ -166,7 +168,7 @@ function Profile({ me }: { me: Me }) {
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Button onClick={save} disabled={!dirty || update.isPending} className={cn(PILL, "bg-brand text-white hover:bg-brand/85")}>
-              {update.isPending ? "Guardando…" : "Guardar cambios"}
+              {update.isPending ? t("profile.saving") : t("profile.save")}
             </Button>
             <Button
               variant="outline"
@@ -174,7 +176,7 @@ function Profile({ me }: { me: Me }) {
               disabled={logout.isPending}
               className={cn(PILL, "border-2 border-white bg-transparent text-white hover:bg-white/10 hover:text-white")}
             >
-              Cerrar sesión
+              {t("profile.signOut")}
             </Button>
           </div>
         </GlassPanel>

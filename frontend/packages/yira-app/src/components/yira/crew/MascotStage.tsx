@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react"
+import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
 import type { CrewStatus } from "@/api/types"
@@ -46,6 +47,7 @@ export function MascotStage({
   name?: string
   className?: string
 }) {
+  const { t } = useTranslation()
   return (
     <div className={cn("relative h-[586px] w-[308px] shrink-0", className)}>
       {/* Platform body */}
@@ -76,13 +78,13 @@ export function MascotStage({
       {scanHref && (
         <Link
           to={scanHref}
-          aria-label={name ? `Comenzar escaneo de ${name}` : "Comenzar escaneo"}
+          aria-label={name ? t("crew.startScanFor", { name }) : t("crew.startScanLabel")}
           className={cn(
             "absolute top-[408px] left-[48px] inline-flex h-[46px] w-[212px] items-center justify-center rounded-pill text-xl font-medium tracking-[-0.4px] transition-transform hover:scale-[1.03] focus-visible:ring-3 focus-visible:ring-white/60 focus-visible:outline-none",
             BUTTON[status],
           )}
         >
-          Comenzar Escaneo
+          {t("crew.startScan")}
         </Link>
       )}
     </div>

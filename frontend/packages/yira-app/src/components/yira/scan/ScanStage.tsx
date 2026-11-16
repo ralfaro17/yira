@@ -1,4 +1,5 @@
 import { Progress } from "@base-ui/react/progress"
+import { useTranslation } from "react-i18next"
 
 import type { CrewStatus } from "@/api/types"
 import { ProgressIndicator, ProgressTrack } from "@/components/ui/progress"
@@ -46,6 +47,7 @@ export function ScanStage({
   caption: string
   animate: boolean
 }) {
+  const { t } = useTranslation()
   const value = Math.round(progress)
   return (
     // Fixed-size stage, scaled down on narrow screens so the 360px ring fits.
@@ -89,7 +91,7 @@ export function ScanStage({
             status={status}
             className="size-full"
             fallbackSrc={MASCOT[status]}
-            alt={`Yiri, la mascota de YIRA, escaneando a ${name}`}
+            alt={t("scan.mascotAlt", { name })}
           />
         </div>
 
@@ -111,7 +113,7 @@ export function ScanStage({
           <p aria-live="polite" className="mt-[12px] text-[15px] text-white/85">
             {caption}
           </p>
-          <Progress.Root value={value} aria-label="Progreso del escaneo" className="mt-[17px] w-[220px]">
+          <Progress.Root value={value} aria-label={t("scan.progressLabel")} className="mt-[17px] w-[220px]">
             <ProgressTrack className="h-2 rounded-[4px] bg-white/20">
               <ProgressIndicator className={cn("rounded-none", status === "stable" || status === "unknown" ? "bg-brand" : STATUS[status].bg)} />
             </ProgressTrack>

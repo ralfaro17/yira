@@ -1,11 +1,14 @@
+import { useTranslation } from "react-i18next"
+
 import type { Alert } from "@/api/types"
 import { timeAgo } from "@/lib/time"
 import { cn } from "@/lib/utils"
 
 import { alertSummary, alertTitle } from "./alertCopy"
 
-/** One notification: unread dot, "{tripulante} — {título}", Spanish summary, relative time. */
+/** One notification: unread dot, "{tripulante} — {título}", translated summary, relative time. */
 export function AlertRow({ alert }: { alert: Alert }) {
+  const { t } = useTranslation()
   const unread = !alert.acknowledged
   return (
     <li className="flex items-start gap-4 border-b border-white/15 py-4 last:border-b-0">
@@ -20,9 +23,9 @@ export function AlertRow({ alert }: { alert: Alert }) {
       <div className="min-w-0 flex-1">
         <p className={cn("text-lg leading-snug text-white", unread ? "font-bold" : "font-medium text-white/85")}>
           {alert.crew_member_name} — {alertTitle(alert)}
-          {unread && <span className="sr-only"> (sin leer)</span>}
+          {unread && <span className="sr-only">{t("notifications.unreadBadge")}</span>}
         </p>
-        <p className="mt-1 text-[15px] text-white/75" title={alert.message}>
+        <p className="mt-1 text-[15px] text-white/75">
           {alertSummary(alert)}
         </p>
       </div>

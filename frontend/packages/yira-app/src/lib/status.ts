@@ -1,4 +1,5 @@
 import type { CrewStatus, StressLevel, SystemKey } from "@/api/types"
+import i18n, { translatedMap } from "@/i18n"
 
 interface StatusStyle {
   label: string
@@ -16,7 +17,9 @@ interface StatusStyle {
 
 export const STATUS: Record<CrewStatus, StatusStyle> = {
   stable: {
-    label: "Estable",
+    get label() {
+      return i18n.t("status.stable")
+    },
     chip: "bg-stable text-white",
     text: "text-stable",
     bg: "bg-stable",
@@ -24,7 +27,9 @@ export const STATUS: Record<CrewStatus, StatusStyle> = {
     arrow: "/yira/common/arrow-stable.svg",
   },
   observation: {
-    label: "Observación",
+    get label() {
+      return i18n.t("status.observation")
+    },
     chip: "bg-observation text-observation-foreground",
     text: "text-observation-accent",
     bg: "bg-observation",
@@ -32,7 +37,9 @@ export const STATUS: Record<CrewStatus, StatusStyle> = {
     arrow: "/yira/common/arrow-observation.svg",
   },
   critical: {
-    label: "Crítico",
+    get label() {
+      return i18n.t("status.critical")
+    },
     chip: "bg-critical text-white",
     text: "text-critical",
     bg: "bg-critical",
@@ -40,7 +47,9 @@ export const STATUS: Record<CrewStatus, StatusStyle> = {
     arrow: "/yira/common/arrow-critical.svg",
   },
   unknown: {
-    label: "Sin datos",
+    get label() {
+      return i18n.t("status.unknown")
+    },
     chip: "bg-white/30 text-white",
     text: "text-white/70",
     bg: "bg-white/40",
@@ -49,24 +58,28 @@ export const STATUS: Record<CrewStatus, StatusStyle> = {
   },
 }
 
-export const SYSTEM_LABEL: Record<SystemKey, string> = {
-  cardiovascular: "Cardiovascular",
-  immune: "Sistema inmune",
-  musculoskeletal: "Óseo-muscular",
-  mental: "Salud mental",
-}
+export const SYSTEM_LABEL: Record<SystemKey, string> = translatedMap({
+  cardiovascular: () => i18n.t("status.system.cardiovascular"),
+  immune: () => i18n.t("status.system.immune"),
+  musculoskeletal: () => i18n.t("status.system.musculoskeletal"),
+  mental: () => i18n.t("status.system.mental"),
+})
 
 /** Title used for "Emergencia actual" when a system is degraded. */
-export const SYSTEM_ISSUE_TITLE: Record<SystemKey, string> = {
-  cardiovascular: "Crisis cardiovascular",
-  immune: "Respuesta inmune",
-  musculoskeletal: "Desgaste óseo-muscular",
-  mental: "Estrés y salud mental",
-}
+export const SYSTEM_ISSUE_TITLE: Record<SystemKey, string> = translatedMap({
+  cardiovascular: () => i18n.t("status.systemIssue.cardiovascular"),
+  immune: () => i18n.t("status.systemIssue.immune"),
+  musculoskeletal: () => i18n.t("status.systemIssue.musculoskeletal"),
+  mental: () => i18n.t("status.systemIssue.mental"),
+})
 
 export const SYSTEM_ORDER: SystemKey[] = ["cardiovascular", "immune", "musculoskeletal", "mental"]
 
-export const STRESS_LABEL: Record<StressLevel, string> = { low: "Bajo", medium: "Medio", high: "Alto" }
+export const STRESS_LABEL: Record<StressLevel, string> = translatedMap({
+  low: () => i18n.t("status.stress.low"),
+  medium: () => i18n.t("status.stress.medium"),
+  high: () => i18n.t("status.stress.high"),
+})
 
 /** "Álvaro, 21" */
 export function crewTitle(member: { name: string; age: number | null }) {

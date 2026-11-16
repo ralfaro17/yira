@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import type { CrewStatus } from "@/api/types"
 import { Progress as ProgressPrimitive } from "@base-ui/react/progress"
 
@@ -19,13 +21,14 @@ export function SystemBar({
   estimated?: boolean
   className?: string
 }) {
+  const { t } = useTranslation()
   const value = score == null ? 0 : Math.round(score)
   return (
     <div className={cn("flex w-full flex-col gap-1.5", className)}>
       <div className="flex items-start justify-between text-[15px]">
         <span className="text-white/90">
           {label}
-          {estimated && <span className="ml-1 text-xs text-white/60">(estimado)</span>}
+          {estimated && <span className="ml-1 text-xs text-white/60">{t("layout.estimated")}</span>}
         </span>
         <span className="font-bold text-white">{score == null ? "—" : `${value}%`}</span>
       </div>
