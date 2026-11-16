@@ -10,9 +10,9 @@
     }
   ],
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://yira.onrender.com/api/:path*" },
-    { "source": "/_allauth/:path*", "destination": "https://yira.onrender.com/_allauth/:path*" },
-    { "source": "/admin/:path*", "destination": "https://yira.onrender.com/admin/:path*" },
+    { "source": "/api/(.*)", "destination": "https://yira.onrender.com/api/$1" },
+    { "source": "/_allauth/(.*)", "destination": "https://yira.onrender.com/_allauth/$1" },
+    { "source": "/admin/(.*)", "destination": "https://yira.onrender.com/admin/$1" },
     { "source": "/((?!\\.well-known/).*)", "destination": "/index.html" }
   ]
 }

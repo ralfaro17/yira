@@ -1,23 +1,23 @@
 {
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://yira.onrender.com/api/:path*"
+      "source": "/api/(.*)",
+      "destination": "https://yira.onrender.com/api/$1"
     },
     {
-      "source": "/_allauth/:path*",
-      "destination": "https://yira.onrender.com/_allauth/:path*"
+      "source": "/_allauth/(.*)",
+      "destination": "https://yira.onrender.com/_allauth/$1"
     },
     {
-      "source": "/accounts/:path*",
-      "destination": "https://yira.onrender.com/accounts/:path*"
+      "source": "/accounts/(.*)",
+      "destination": "https://yira.onrender.com/accounts/$1"
     },
     {
-      "source": "/admin/:path*",
-      "destination": "https://yira.onrender.com/admin/:path*"
+      "source": "/admin/(.*)",
+      "destination": "https://yira.onrender.com/admin/$1"
     },
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
